@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="text-center py-12">
+    <h1 class="text-4xl font-bold neon-text mb-6">👥 Meet Our Team</h1>
+    <p class="text-gray-400 neon-paragraph mb-8">
+        The people behind PoseGuard – dedicated to AI-driven safety.
+    </p>
+
+    <!-- Project Description -->
+    <div class="max-w-3xl mx-auto mb-10">
+        <p class="text-gray-300">
+            PoseGuard is an AI-powered Driver Unwanted Pose Detection System 
+            designed to enhance road safety by detecting driver distractions 
+            in real-time and sending alerts.
+        </p>
+    </div>
+
+    <!-- Scrollable Team Section -->
+    <div class="overflow-x-auto whitespace-nowrap scrollbar-hide flex justify-center space-x-6 px-6" id="teamScroll">
+
+        <!-- Antra -->
+        <div class="team-card neon-box hover:scale-105 transition duration-300">
+            <img src="/static/images/antra.jpeg" class="rounded-xl h-40 w-40 object-cover mx-auto">
+            <h3 class="mt-4 text-xl font-semibold neon-text">Antra Singh</h3>
+            <p class="text-gray-400">Project Manager</p>
+        </div>
+
+        <!-- Eshya -->
+        <div class="team-card neon-box hover:scale-105 transition duration-300">
+            <img src="/static/images/eshya.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
+            <h3 class="mt-4 text-xl font-semibold neon-text">Eshya Yadav</h3>
+            <p class="text-gray-400">Frontend Developer</p>
+        </div>
+
+        <!-- Ujjawal -->
+        <div class="team-card neon-box hover:scale-105 transition duration-300">
+            <img src="/static/images/ujjawal.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
+            <h3 class="mt-4 text-xl font-semibold neon-text">Ujjwal Kanojiya</h3>
+            <p class="text-gray-400">Database & Development</p>
+        </div>
+
+        <!-- Sumati -->
+        <div class="team-card neon-box hover:scale-105 transition duration-300">
+            <img src="/static/images/sumati.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
+            <h3 class="mt-4 text-xl font-semibold neon-text">Sumati Gaur</h3>
+            <p class="text-gray-400">AI Engineer</p>
+        </div>
+
+        <!-- Amit -->
+        <div class="team-card neon-box hover:scale-105 transition duration-300">
+            <img src="/static/images/amit.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
+            <h3 class="mt-4 text-xl font-semibold neon-text">Amit Singh</h3>
+            <p class="text-gray-400">UI/UX Designer</p>
+        </div>
+
+    </div>
+</section>
+
+<!-- Smooth Auto Scroll Script -->
+<script>
+    const scrollContainer = document.getElementById('teamScroll');
+
+    let scrollAmount = 0;
+
+    setInterval(() => {
+        scrollAmount += 220;
+        scrollContainer.scrollTo({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+
+        if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+            scrollAmount = 0;
+        }
+    }, 3000);
+</script>
+
+{% endblock %}

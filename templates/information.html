@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mx-auto text-center fade-in py-10">
+    <div class="card floating bg-gray-900 p-8 rounded-lg shadow-lg">
+        <h1 class="text-4xl font-bold neon-text">About This Project</h1>
+        <p class="mt-6 text-lg neon-paragraph">
+            Driver Unwanted Pose Detection System is designed to monitor driver
+            behaviour in real-time, detect distractions, and provide instant alerts to
+            prevent accidents.
+        </p>
+        <p class="mt-4 neon-paragraph">
+            This system leverages computer vision and deep learning techniques to
+            analyse live video feeds, classify driver activities, and detect unwanted
+            poses indicative of distraction. When a driver is found engaging in unsafe
+            behaviour, the system issues real-time warnings and transmits feedback
+            to the transport facility owner or service provider for further action.
+        </p>
+
+        <p class="mt-4 neon-paragraph">
+            The project integrates various AI-powered modules, including image
+            preprocessing, real-time video processing, distraction detection, alert
+            generation, and remote reporting. By deploying this solution in cabs,
+            transport services, and fleet management systems, organizations can
+            enhance driver accountability, passenger safety, and operational
+            efficiency.
+        </p>
+        <p class="mt-4 neon-paragraph">
+            This project aims to create a scalable, efficient, and cost-effective
+            solution to minimize accidents, promote responsible driving, and contribute
+            to safer roads.
+        </p>
+        <a href="/" class="mt-6 inline-block bg-blue-500 px-6 py-2 rounded text-white button-hover shadow-lg hover:bg-blue-600 transition">Back to Home</a>
+    </div>
+</div>
+
+{% endblock %}

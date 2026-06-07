@@ -1,0 +1,191 @@
+<nav class="navbar-custom">
+  <div class="container-fluid navbar-inner">
+    <a href="{{ url_for('index') }}" class="navbar-brand-custom">
+      <span class="logo-icon">🚀</span>
+      <span class="logo-text">PoseGuard</span>
+    </a>
+    <ul class="navbar-links-custom">
+      <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+      {% if session.get('user') %}
+      <li><a href="{{ url_for('video_upload') }}">📹 Video Analysis</a></li>
+      {% endif %}
+      <li><a href="{{ url_for('reports') }}">Reports</a></li>
+      <li><a href="{{ url_for('about') }}">About</a></li>
+      <li><a href="{{ url_for('view_records') }}">📁 Incident Records</a></li>
+      <li><a href="{{ url_for('information') }}">Information</a></li>
+
+      {% if session.get('user') %}
+        <li><a href="{{ url_for('logout') }}" class="logout-link-custom">Logout</a></li>
+      {% else %}
+        <li><a href="{{ url_for('login') }}">Login</a></li>
+      {% endif %}
+
+      {% if session.get('admin') %}
+        <li><a href="{{ url_for('admin_portal') }}">Admin Portal</a></li>
+      {% endif %}
+    </ul>
+  </div>
+  <div class="navbar-background"></div>
+</nav>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --neon-cyan: #00f3ff;
+    --neon-magenta: #ff00ff;
+    --neon-blue: #0066ff;
+    --neon-green: #00ff9d;
+    --neon-pink: #ff1493;
+    --dark-bg: #0a0a15;
+    --darker-bg: #050508;
+    --text-glow: 0 0 10px rgba(0, 243, 255, 0.5);
+  }
+
+  .navbar-custom {
+    width: 100%;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(10, 10, 21, 0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+    padding: 15px 30px;
+    font-family: 'Orbitron', sans-serif;
+    transform-style: preserve-3d;
+    transform: translateZ(20px);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .navbar-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%);
+    opacity: 0.5;
+    animation: backgroundPulse 8s ease-in-out infinite;
+    z-index: -1;
+  }
+
+  .navbar-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  .navbar-brand-custom {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    padding: 8px 15px;
+    border-radius: 15px;
+    background: rgba(0, 243, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 243, 255, 0.1);
+  }
+
+  .logo-icon {
+    font-size: 1.8rem;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-glow);
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--neon-cyan);
+    text-shadow: var(--text-glow);
+    letter-spacing: 1px;
+  }
+
+  .navbar-links-custom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .navbar-links-custom li a {
+    color: #ffffff;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 10px 20px;
+    border-radius: 15px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    background: rgba(0, 243, 255, 0.05);
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(0, 243, 255, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .navbar-links-custom li a:hover {
+    color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.1);
+    transform: translateY(-3px) translateZ(10px);
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+    text-shadow: var(--text-glow);
+  }
+
+  .logout-link-custom {
+    color: var(--neon-pink);
+    background: rgba(255, 20, 147, 0.1);
+    border: 1px solid rgba(255, 20, 147, 0.2);
+  }
+
+  .logout-link-custom:hover {
+    color: #ffffff;
+    background: rgba(255, 20, 147, 0.2);
+    box-shadow: 0 0 15px rgba(255, 20, 147, 0.3);
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-5px);
+    }
+  }
+
+  @keyframes backgroundPulse {
+    0%, 100% {
+      opacity: 0.5;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.05);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .navbar-inner {
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .navbar-links-custom {
+      width: 100%;
+      justify-content: center;
+      gap: 10px;
+    }
+  }
+</style>

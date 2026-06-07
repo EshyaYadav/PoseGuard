@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PoseGuard - Driver Safety AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
+  <style>
+    :root {
+      --neon-cyan: #00f3ff;
+      --neon-magenta: #ff00ff;
+      --neon-blue: #0066ff;
+      --neon-green: #00ff9d;
+      --neon-pink: #ff1493;
+      --dark-bg: #0a0a15;
+      --darker-bg: #050508;
+      --card-bg: rgba(10, 10, 21, 0.8);
+      --text-glow: 0 0 10px rgba(0, 243, 255, 0.5);
+      --section-spacing: 8rem;
+    }
+
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--dark-bg);
+      color: #ffffff;
+      overflow-x: hidden;
+      line-height: 1.6;
+      perspective: 1000px;
+    }
+
+
+    #three-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+
+    .cyber-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -2;
+      background: 
+        radial-gradient(circle at 20% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(0, 102, 255, 0.1) 0%, transparent 50%);
+      animation: backgroundPulse 8s ease-in-out infinite;
+    }
+
+
+    .cyber-particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+
+    .cyber-particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: radial-gradient(circle, 
+        var(--neon-cyan),
+        var(--neon-magenta),
+        transparent
+      );
+      border-radius: 50%;
+      box-shadow: 0 0 15px var(--neon-cyan);
+      animation: particleFloat 6s ease-in-out infinite;
+    }
+
+
+    .cyber-connection {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, 
+        transparent,
+        var(--neon-cyan),
+        var(--neon-magenta),
+        transparent
+      );
+      transform-origin: left;
+      animation: connectionFlow 4s linear infinite;
+    }
+
+
+    .cyber-grid {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      background-image: 
+        linear-gradient(to right, rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      transform: perspective(1000px) rotateX(60deg);
+      animation: gridMove 15s linear infinite;
+    }
+
+
+    .navbar {
+      background: rgba(10, 10, 21, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(0, 243, 255, 0.1);
+      transform-style: preserve-3d;
+      transform: translateZ(20px);
+    }
+
+
+    .navbar-brand {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 2rem;
+      color: var(--neon-cyan);
+      text-shadow: var(--text-glow);
+      transform-style: preserve-3d;
+      animation: textGlow 3s ease-in-out infinite;
+    }
+
+
+    .nav-link {
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 0 1rem;
+      transition: all 0.3s ease;
+      transform-style: preserve-3d;
+    }
+
+
+    .nav-link:hover {
+      color: var(--neon-cyan);
+      text-shadow: var(--text-glow);
+      transform: translateZ(10px);
+    }
+
+
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transform-style: preserve-3d;
+    }
+
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 1200px;
+      width: 100%;
+      padding: 3rem;
+      text-align: center;
+      background: rgba(10, 10, 21, 0.2);
+      backdrop-filter: blur(20px);
+      border-radius: 30px;
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      box-shadow: 0 0 50px rgba(0, 243, 255, 0.1);
+      transform-style: preserve-3d;
+      transform: translateZ(30px);
+      animation: contentFloat 6s ease-in-out infinite;
+    }
+
+
+    .hero h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      color: var(--neon-cyan);
+      text-shadow: var(--text-glow);
+      transform-style: preserve-3d;
+      animation: titleFloat 4s ease-in-out infinite;
+    }
+
+
+    .hero h1 span {
+  display: block;
+  font-size: clamp(2rem, 6vw, 4rem);
+  background: linear-gradient(45deg, var(--neon-cyan), var(--neon-magenta));
+
+  background-clip: text;              /* ✅ add this line */
+  -webkit-background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.3));
+  transform-style: preserve-3d;
+  animation: spanGlow 3s ease-in-out infinite;
+}
+
+
+    .hero p {
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      color: #fff;
+      margin: 0 auto 2rem;
+      max-width: 800px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+
+    .btn-glow {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 1.1rem;
+      padding: 0.8rem 2rem;
+      background: linear-gradient(45deg, var(--neon-cyan), var(--neon-magenta));
+      color: var(--darker-bg);
+      border: none;
+      border-radius: 50px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
+      transform-style: preserve-3d;
+    }
+
+
+    .btn-glow:hover {
+      transform: translateY(-3px) scale(1.05) translateZ(20px);
+      box-shadow: 0 8px 25px rgba(0, 243, 255, 0.5);
+    }
+
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 2rem;
+      color: #fff;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+      transform: translateZ(10px);
+    }
+
+
+    .card:hover {
+      transform: translateY(-10px) scale(1.02) translateZ(30px);
+      box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+      border-color: var(--neon-cyan);
+    }
+
+
+    .card h3 {
+      color: var(--neon-cyan);
+      font-family: 'Orbitron', sans-serif;
+      margin-bottom: 1rem;
+      text-shadow: var(--text-glow);
+      transform-style: preserve-3d;
+    }
+
+
+    .card p {
+      transform: translateZ(10px);
+    }
+
+
+    section {
+      padding: var(--section-spacing) 0;
+      position: relative;
+      transform-style: preserve-3d;
+    }
+
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 2.8rem;
+      text-align: center;
+      margin-bottom: 3rem;
+      color: var(--neon-cyan);
+      text-shadow: var(--text-glow);
+      transform-style: preserve-3d;
+      transform: translateZ(20px);
+      animation: titleGlow 3s ease-in-out infinite;
+    }
+
+
+    @keyframes backgroundPulse {
+      0%, 100% { transform: scale(1); opacity: 0.5; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+
+    @keyframes particleFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+      50% { transform: translate(30px, -20px) scale(1.2); opacity: 0.8; }
+    }
+
+
+    @keyframes connectionFlow {
+      0% { transform: scaleX(0); opacity: 0; }
+      50% { transform: scaleX(1); opacity: 0.6; }
+      100% { transform: scaleX(0); opacity: 0; }
+    }
+
+
+    @keyframes gridMove {
+      0% { transform: perspective(1000px) rotateX(60deg) translateY(0); }
+      100% { transform: perspective(1000px) rotateX(60deg) translateY(50px); }
+    }
+
+
+    @keyframes contentFloat {
+      0%, 100% { transform: translateZ(30px) translateY(0); }
+      50% { transform: translateZ(30px) translateY(-20px); }
+    }
+
+
+    @keyframes titleFloat {
+      0%, 100% { transform: translateZ(0); }
+      50% { transform: translateZ(20px); }
+    }
+
+
+    @keyframes spanGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.3)); }
+      50% { filter: drop-shadow(0 0 20px rgba(0, 243, 255, 0.6)); }
+    }
+
+
+    @keyframes textGlow {
+      0%, 100% { text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
+      50% { text-shadow: 0 0 20px rgba(0, 243, 255, 0.8); }
+    }
+
+
+    @keyframes titleGlow {
+      0%, 100% { 
+        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        transform: translateZ(20px);
+      }
+      50% { 
+        text-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
+        transform: translateZ(30px);
+      }
+    }
+
+
+    @media (max-width: 768px) {
+      :root {
+        --section-spacing: 4rem;
+      }
+
+      .hero h1 {
+        font-size: 3rem;
+      }
+     
+      .hero p {
+        font-size: 1.2rem;
+      }
+     
+      .card-container {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+
+<body>
+  <div id="three-container"></div>
+  <div class="cyber-background"></div>
+  <div class="cyber-particles" id="cyberParticles"></div>
+  <div class="cyber-grid"></div>
+
+  <div class="content-wrapper">
+    {% include 'navbar.html' %}
+   
+    <section class="hero">
+      <div class="hero-content">
+        <h1>PoseGuard<span>Driver Safety</span></h1>
+        <p>Advanced AI-powered system for real-time driver monitoring, pose detection, and safety enhancement</p>
+        <a href="#features" class="btn btn-glow">Explore Features</a>
+      </div>
+    </section>
+
+    <section class="features" id="features">
+      <h2 class="section-title">Key Features</h2>
+      <div class="card-container">
+        <div class="card">
+          <h3>Real-time Pose Detection</h3>
+          <p>Advanced deep learning algorithms continuously monitor and analyze driver posture, detecting unsafe positions and potential risks.</p>
+        </div>
+        <div class="card">
+          <h3>Smart Alert System</h3>
+          <p>Instant notifications for drowsiness, distraction, or unsafe driving patterns with intelligent feedback mechanisms.</p>
+        </div>
+        <div class="card">
+          <h3>Comprehensive Analytics</h3>
+          <p>Detailed insights and reports on driver behavior, safety metrics, and improvement recommendations.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="testimonials">
+      <h2 class="section-title">What Users Say</h2>
+      <div class="card-container">
+        <div class="card">
+          <p>"The AI system has revolutionized our fleet safety. Accident rates have dropped by 40% since implementation."</p>
+          <strong>— Logistics Director, SmartTransit</strong>
+        </div>
+        <div class="card">
+          <p>"The real-time monitoring and intelligent feedback have significantly improved our driver performance."</p>
+          <strong>— Operations Head, FleetSecure</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="contact">
+      <h2 class="section-title">Get In Touch</h2>
+      <div class="contact-form">
+        <form>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <input type="text" class="form-control" placeholder="Your Name">
+            </div>
+            <div class="col-md-6">
+              <input type="email" class="form-control" placeholder="Email Address">
+            </div>
+            <div class="col-12">
+              <textarea class="form-control" rows="4" placeholder="Message"></textarea>
+            </div>
+            <div class="col-12 text-center">
+              <button type="submit" class="btn btn-glow">Send Message</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <footer>
+      <div class="container">
+        <p>&copy; Driver Pose Detection AI | Powered by Deep Learning</p>
+        <div class="social-icons">
+          <a href="#"><i class="fab fa-github"></i></a>
+          <a href="#"><i class="fab fa-linkedin"></i></a>
+          <a href="#"><i class="fab fa-twitter"></i></a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Three.js Scene Setup
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById('three-container').appendChild(renderer.domElement);
+
+    // Create floral particles
+    const particles = [];
+    const particleCount = 200;
+    const particleGeometry = new THREE.BufferGeometry();
+    const particleMaterial = new THREE.PointsMaterial({
+      color: 0x00f3ff,
+      size: 0.1,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending
+    });
+
+    for (let i = 0; i < particleCount; i++) {
+      const x = (Math.random() - 0.5) * 10;
+      const y = (Math.random() - 0.5) * 10;
+      const z = (Math.random() - 0.5) * 10;
+      particles.push(x, y, z);
+    }
+
+    particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particles, 3));
+    const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particleSystem);
+
+    // Camera position
+    camera.position.z = 5;
+
+    // Animation
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      particleSystem.rotation.x += 0.001;
+      particleSystem.rotation.y += 0.001;
+      
+      particles.forEach((_, i) => {
+        if (i % 3 === 0) {
+          particleGeometry.attributes.position.array[i] += Math.sin(Date.now() * 0.001 + i) * 0.01;
+        }
+      });
+      
+      particleGeometry.attributes.position.needsUpdate = true;
+      
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Initialize Cyber Particles
+    function initCyberParticles() {
+      const cyberParticles = document.getElementById('cyberParticles');
+      
+      // Create particles
+      for (let i = 0; i < 50; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'cyber-particle';
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        particle.style.animationDelay = `${Math.random() * 6}s`;
+        cyberParticles.appendChild(particle);
+      }
+
+      // Create connections
+      for (let i = 0; i < 30; i++) {
+        const connection = document.createElement('div');
+        connection.className = 'cyber-connection';
+        connection.style.left = `${Math.random() * 100}%`;
+        connection.style.top = `${Math.random() * 100}%`;
+        connection.style.width = `${Math.random() * 200 + 100}px`;
+        connection.style.animationDelay = `${Math.random() * 4}s`;
+        cyberParticles.appendChild(connection);
+      }
+    }
+
+    // Add mouse parallax effect
+    function addParallaxEffect() {
+      document.addEventListener('mousemove', (e) => {
+        const mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+        const mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+
+        const cyberParticles = document.getElementById('cyberParticles');
+        const cyberGrid = document.querySelector('.cyber-grid');
+
+        if (cyberParticles) {
+          cyberParticles.style.transform = `translate(${mouseX * 20}px, ${mouseY * 20}px)`;
+        }
+
+        if (cyberGrid) {
+          cyberGrid.style.transform = `perspective(1000px) rotateX(60deg) translateY(${mouseY * 20}px)`;
+        }
+
+        // Update Three.js camera
+        camera.position.x = mouseX * 2;
+        camera.position.y = -mouseY * 2;
+        camera.lookAt(scene.position);
+      });
+    }
+
+    // Initialize all animations
+    window.addEventListener('load', () => {
+      initCyberParticles();
+      addParallaxEffect();
+    });
+  </script>
+</body>
+
+
+</html>
+
+

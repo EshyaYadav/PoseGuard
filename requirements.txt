@@ -1,0 +1,11 @@
+flask
+flask_sqlalchemy
+bcrypt
+tensorflow
+opencv-python
+numpy
+gunicorn
+playsound
+pyttsx3
+pymongo[srv]
+python-dotenv

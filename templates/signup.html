@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<section class="flex justify-center items-center h-screen relative">
+    <canvas id="bgCanvas" class="absolute top-0 left-0 w-full h-full"></canvas>
+
+    <div class="glass-card w-96 relative z-10 flex flex-col items-center">
+        <h2 class="text-3xl font-bold text-center mb-6">🚀 Sign Up</h2>
+
+        <!-- Error Message -->
+        {% if error %}
+        <p class="text-red-400 text-center">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST" id="signup-form" class="w-full flex flex-col">
+            <input type="text" name="name" placeholder="Full Name" class="input-field" required>
+            <input type="text" name="username" placeholder="Username" class="input-field" required>
+            <input type="email" name="email" placeholder="Email" class="input-field" required>
+            <input type="password" name="password" placeholder="Password" class="input-field" required>
+
+            <button type="submit" class="btn-primary">Create Account</button>
+        </form>
+
+        <p class="text-gray-400 mt-4 text-center">Already have an account? 
+            <a href="{{ url_for('login') }}" class="text-blue-400 hover:underline">Login here</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

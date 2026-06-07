@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.pyc
+test.db
+instance/
+static/processed/*
+!static/processed/.gitkeep
+.vercel
+node_modules
+dist
+build

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Floating Shapes -->
+<div class="floating-shape"></div>
+<div class="floating-shape"></div>
+<div class="floating-shape"></div>
+
+<div class="container px-6 py-10">
+    <h1 class="section-title" id="reportTitle">AI Alert Reports</h1>
+
+    {% if alerts %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        {% for alert in alerts %}
+        <div class="glass-card report-card opacity-0 transform scale-90">
+            <h2 class="text-xl neon-text mb-2">🚨 {{ alert.alert_type }}</h2>
+            <p class="neon-paragraph">Detected for: <span class="font-semibold text-white">{{ alert.user_email }}</span></p>
+            <p class="text-sm text-gray-400 mt-1">At: {{ alert.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center text-lg neon-paragraph mt-6">No alerts have been recorded yet. Monitoring is active...</p>
+    {% endif %}
+
+    <h2 class="section-title mt-16 mb-6">Screenshots</h2>
+    {% if screenshots %}
+    <div class="scrollable-section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for screenshot in screenshots %}
+        <div class="glass-card">
+            <img src="{{ url_for('get_media', filename=screenshot.image_path) }}" 
+                 class="w-full h-48 object-cover rounded mb-4 shadow-lg border border-blue-500">
+            <p class="neon-paragraph"><strong>Email:</strong> {{ screenshot.user_email }}</p>
+            <p class="neon-paragraph"><strong>Type:</strong> {{ screenshot.alert_type }}</p>
+            <p class="text-sm text-gray-400"><strong>Time:</strong> {{ screenshot.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center text-lg neon-paragraph mt-6">No screenshots have been recorded yet.</p>
+    {% endif %}
+</div>
+
+<!-- Optional floating stickers (star.png or any sticker) -->
+<div class="sticker"></div>
+<div class="sticker"></div>
+
+<!-- Animation Script -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        gsap.from("#reportTitle", { duration: 1, opacity: 0, y: -50, ease: "power3.out" });
+        gsap.to(".report-card", { duration: 1, opacity: 1, scale: 1, stagger: 0.3, ease: "power3.out" });
+    });
+</script>
+{% endblock %}
