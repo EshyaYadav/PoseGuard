@@ -11,3 +11,5 @@ static/processed/*
 node_modules/
 venv/
 *.h5
+.env.example  
+.env.example  
