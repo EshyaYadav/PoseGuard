@@ -1,71 +1,46 @@
 from flask import Flask, render_template, request, redirect, url_for, session, Response, abort
 from flask_sqlalchemy import SQLAlchemy
-import bcrypt
-import cv2
-from playsound import playsound
-from werkzeug.utils import secure_filename
-import os
-import tempfile
-import time
+import bcrypt, cv2, os, tempfile, time
 from datetime import datetime
 from collections import deque
 from threading import Thread, Event
 from dotenv import load_dotenv
 from pymongo import MongoClient
 import gridfs
-from bson.objectid import ObjectId
+from werkzeug.utils import secure_filename
 from pose_detection import detect_pose
 
-# Load environment variables
 load_dotenv()
 
-mongo_uri = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
-client = MongoClient(mongo_uri)
-mongo_db = client["driver_safety"]
-collection = mongo_db["records"]
-fs = gridfs.GridFS(mongo_db)
-
 app = Flask(__name__)
-app.secret_key = os.getenv("SECRET_KEY", "default_secret_key")
-# For Vercel, allow camera to fail gracefully if it doesn't exist
-camera = cv2.VideoCapture(0)
-if not camera.isOpened():
-    print("Warning: Camera not found (expected on serverless environments like Vercel)")
-
-def map_status(class_name):
-    mapping = {
-        "Normal Pose": "Safe",
-        "Phone (Using)": "Phone",
-        "Phone (Talking)": "Phone",
-        "Looking Away": "Drowsy",
-        "Distracted....": "Drowsy",
-        "Drinking": "Unsafe",
-        "Makeup": "Unsafe",
-        "No Hands on Wheel": "Unsafe"
-    }
-    return mapping.get(class_name, "Unsafe")
-
-# Sound control
-sound_stop_event = Event()
-
-# Config
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///test.db")
-app.config['UPLOAD_FOLDER'] = os.path.join('static', 'processed')
+app.secret_key = os.getenv('SECRET_KEY', 'changeme-poseguard-secret')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///poseguard.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov', 'wmv'}
 
 db = SQLAlchemy(app)
 
-# Create folders
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+MONGO_URI = os.getenv('MONGO_URI', '')
+mongo_client = None
+mongo_db = None
+fs = None
+
+if MONGO_URI:
+    try:
+        mongo_client = MongoClient(MONGO_URI)
+        mongo_db = mongo_client['poseguard']
+        fs = gridfs.GridFS(mongo_db)
+        print("[PoseGuard] MongoDB connected")
+    except Exception as e:
+        print(f"[PoseGuard] MongoDB connection failed: {e}")
 
 
-# ===================== MODELS =====================
+# ── Models ──────────────────────────────────────────────────────────────────
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(80), nullable=False)
+    name = db.Column(db.String(120), nullable=False)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
@@ -74,10 +49,10 @@ class User(db.Model):
         self.name = name
         self.username = username
         self.email = email
-        self.password = bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        self.password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
     def check_password(self, password):
-        return bcrypt.checkpw(password.encode(), self.password.encode())
+        return bcrypt.checkpw(password.encode('utf-8'), self.password.encode('utf-8'))
 
 
 class Alert(db.Model):
@@ -89,14 +64,15 @@ class Alert(db.Model):
 
 class ScreenshotAlert(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    image_path = db.Column(db.String(200))
+    image_path = db.Column(db.String(300))
     user_email = db.Column(db.String(120))
     alert_type = db.Column(db.String(100))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
+
 class IncidentVideo(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    video_path = db.Column(db.String(200))
+    video_path = db.Column(db.String(300))
     user_email = db.Column(db.String(120))
     alert_type = db.Column(db.String(100))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
@@ -106,7 +82,32 @@ with app.app_context():
     db.create_all()
 
 
-# ===================== HELPERS =====================
+# ── Helpers ──────────────────────────────────────────────────────────────────
+
+_camera = None
+
+
+def get_camera():
+    global _camera
+    if _camera is None or not _camera.isOpened():
+        _camera = cv2.VideoCapture(0)
+        if not _camera.isOpened():
+            print("[PoseGuard] Warning: Camera not found")
+    return _camera
+
+
+def map_status(class_name):
+    return {
+        "Normal Pose": "Safe",
+        "Phone (Using)": "Phone",
+        "Phone (Talking)": "Phone",
+        "Looking Away": "Drowsy",
+        "Distracted....": "Drowsy",
+        "Drinking": "Unsafe",
+        "Makeup": "Unsafe",
+        "No Hands on Wheel": "Unsafe",
+    }.get(class_name, "Unsafe")
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -114,292 +115,213 @@ def allowed_file(filename):
 
 def play_alert_sound(class_name):
     try:
-        sound_stop_event.clear()
         import pyttsx3
         engine = pyttsx3.init()
-        message = f"Warning: {class_name} detected. Please stay alert, especially in high traffic zones or crowded areas."
-        while not sound_stop_event.is_set():
-            engine.say(message)
-            engine.runAndWait()
-            sound_stop_event.wait(1.0)
+        engine.say(f"Warning! {class_name} detected.")
+        engine.runAndWait()
     except Exception as e:
-        print("Sound error:", e)
+        print(f"[PoseGuard] TTS error: {e}")
 
-def save_incident_video(frames, video_filename):
-    if not frames:
+
+def save_incident_video(frames, video_filename, user_email, alert_type):
+    if not fs:
         return
-        
-    temp_dir = tempfile.gettempdir()
-    temp_path = os.path.join(temp_dir, video_filename)
-    
-    height, width, layers = frames[0].shape
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(temp_path, fourcc, 10.0, (width, height))
-    for f in frames:
-        out.write(f)
-    out.release()
-    
+    tmp_path = None
     try:
-        with open(temp_path, 'rb') as video_file:
-            fs.put(video_file, filename=video_filename, content_type="video/mp4")
+        tmp_fd, tmp_path = tempfile.mkstemp(suffix='.mp4')
+        os.close(tmp_fd)
+        if not frames:
+            return
+        h, w = frames[0].shape[:2]
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        out = cv2.VideoWriter(tmp_path, fourcc, 10, (w, h))
+        for f in frames:
+            out.write(f)
+        out.release()
+        with open(tmp_path, 'rb') as f:
+            file_id = fs.put(f, filename=video_filename, content_type='video/mp4')
+        with app.app_context():
+            record = IncidentVideo(video_path=str(file_id), user_email=user_email, alert_type=alert_type)
+            db.session.add(record)
+            db.session.commit()
     except Exception as e:
-        print("GridFS Video Error:", e)
+        print(f"[PoseGuard] save_incident_video error: {e}")
     finally:
-        if os.path.exists(temp_path):
-            try:
-                os.remove(temp_path)
-            except:
-                pass
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
-# ===================== VIDEO =====================
-
-def gen_frames(user_email):
-    unwanted_count = 0
-    threshold = 10
-    sound_thread = None
+def _process_frame_loop(cap, user_email):
     frame_buffer = deque(maxlen=150)
+    unwanted_count = 0
     last_recording_time = 0
-    was_unsafe = False
+    last_status = "safe"
+    sound_thread = None
+    sound_stop_event = Event()
 
     while True:
-        success, frame = camera.read()
+        success, frame = cap.read()
         if not success:
+            time.sleep(0.05)
+            if not cap.isOpened():
+                break
             continue
 
         frame_buffer.append(frame.copy())
         is_unwanted, class_name, confidence = detect_pose(frame)
-        
-        # Log "Safe" transition
-        if not is_unwanted and was_unsafe:
-            try:
-                collection.insert_one({
-                    "event": "Resumed Normal Driving",
-                    "confidence": float(confidence),
-                    "status": "Safe",
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "video_file": None
-                })
-                was_unsafe = False
-            except Exception as e:
-                print("Safe Log Error:", e)
 
-        label = f"{class_name}: {confidence*100:.1f}%"
-        color = (0,0,255) if is_unwanted else (0,255,0)
-        cv2.putText(frame, label, (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
+        color = (0, 0, 255) if is_unwanted else (0, 255, 0)
+        cv2.putText(frame, f"{class_name}: {confidence * 100:.1f}%", (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
         if is_unwanted:
             unwanted_count += 1
         else:
+            if last_status == "unsafe" and mongo_db is not None:
+                try:
+                    mongo_db.incidents.insert_one({
+                        "event": "Resumed Normal Driving",
+                        "user_email": user_email,
+                        "status": "Safe",
+                        "confidence": 0.0,
+                        "timestamp": datetime.utcnow().isoformat(),
+                    })
+                except Exception:
+                    pass
             unwanted_count = 0
+            last_status = "safe"
             sound_stop_event.set()
 
-        if unwanted_count > threshold:
-            filename = f"{user_email}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-            
-            # Encode image to memory and push to GridFS
-            try:
-                ret_img, buffer_img = cv2.imencode('.jpg', frame)
-                if ret_img:
-                    fs.put(buffer_img.tobytes(), filename=filename, content_type="image/jpeg")
-            except Exception as e:
-                print("GridFS Image Error:", e)
+        if unwanted_count > 10:
+            last_status = "unsafe"
+            timestamp_str = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+
+            # Screenshot
+            screenshot_id = None
+            if fs:
+                try:
+                    _, buf = cv2.imencode('.jpg', frame)
+                    screenshot_id = fs.put(buf.tobytes(), filename=f"shot_{timestamp_str}.jpg",
+                                           content_type='image/jpeg')
+                except Exception as e:
+                    print(f"[PoseGuard] screenshot error: {e}")
 
             with app.app_context():
-                db.session.add(Alert(alert_type="Unwanted Pose", user_email=user_email))
-                db.session.add(ScreenshotAlert(image_path=filename, user_email=user_email, alert_type="Unwanted Pose"))
                 try:
+                    db.session.add(Alert(alert_type=class_name, user_email=user_email))
+                    if screenshot_id:
+                        db.session.add(ScreenshotAlert(
+                            image_path=str(screenshot_id),
+                            user_email=user_email,
+                            alert_type=class_name,
+                        ))
                     db.session.commit()
                 except Exception as e:
+                    print(f"[PoseGuard] DB error: {e}")
                     db.session.rollback()
-                    print("DB Commit Error (Live):", e)
 
-            video_filename = None
-            current_time = time.time()
-            if current_time - last_recording_time > 10:
-                video_filename = f"{user_email}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
-                Thread(target=save_incident_video, args=(list(frame_buffer), video_filename)).start()
-                last_recording_time = current_time
+            if time.time() - last_recording_time > 10:
+                last_recording_time = time.time()
+                video_filename = f"incident_{timestamp_str}.mp4"
+                frames_copy = list(frame_buffer)
+                t = Thread(target=save_incident_video,
+                           args=(frames_copy, video_filename, user_email, class_name),
+                           daemon=True)
+                t.start()
 
-            try:
-                mapped_event = map_status(class_name)
-                collection.insert_one({
-                    "event": mapped_event,
-                    "confidence": float(confidence),
-                    "status": "Unsafe",
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "video_file": video_filename
-                })
-                was_unsafe = True
-            except Exception as e:
-                print("MongoDB Insertion Error (Live):", e)
+            if mongo_db is not None:
+                try:
+                    mongo_db.incidents.insert_one({
+                        "event": class_name,
+                        "user_email": user_email,
+                        "status": map_status(class_name),
+                        "confidence": round(confidence * 100, 1),
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "video_file": None,
+                    })
+                except Exception as e:
+                    print(f"[PoseGuard] mongo insert error: {e}")
 
-            if not sound_thread or not sound_thread.is_alive():
-                sound_thread = Thread(target=play_alert_sound, args=(class_name,))
+            if sound_thread is None or not sound_thread.is_alive():
+                sound_stop_event.clear()
+                sound_thread = Thread(target=play_alert_sound, args=(class_name,), daemon=True)
                 sound_thread.start()
 
             unwanted_count = 0
 
         ret, buffer = cv2.imencode('.jpg', frame)
-        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+        if ret:
+            yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+
+def gen_frames(user_email):
+    cam = get_camera()
+    if not cam.isOpened():
+        return
+    yield from _process_frame_loop(cam, user_email)
+
 
 def gen_frames_for_file(filepath, user_email):
     cap = cv2.VideoCapture(filepath)
-    unwanted_count = 0
-    threshold = 10
-    sound_thread = None
-    frame_buffer = deque(maxlen=150)
-    last_recording_time = 0
-    was_unsafe = False
-
-    while cap.isOpened():
-        success, frame = cap.read()
-        if not success:
-            break
-
-        frame_buffer.append(frame.copy())
-        is_unwanted, class_name, confidence = detect_pose(frame)
-
-        # Log "Safe" transition
-        if not is_unwanted and was_unsafe:
-            try:
-                collection.insert_one({
-                    "event": "Resumed Normal Driving (Video)",
-                    "confidence": float(confidence),
-                    "status": "Safe",
-                    "time": datetime.now().strftime("%H:%M:%S"),
-                    "video_file": None
-                })
-                was_unsafe = False
-            except Exception as e:
-                print("Safe Log Error (Video):", e)
-
-        label = f"{class_name}: {confidence*100:.1f}%"
-        color = (0,0,255) if is_unwanted else (0,255,0)
-        cv2.putText(frame, label, (10,30), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
-
-        if is_unwanted:
-            unwanted_count += 1
-        else:
-            unwanted_count = 0
-            sound_stop_event.set()
-
-        if unwanted_count > threshold:
-            filename = f"upload_{user_email}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
-            
-            try:
-                ret_img, buffer_img = cv2.imencode('.jpg', frame)
-                if ret_img:
-                    fs.put(buffer_img.tobytes(), filename=filename, content_type="image/jpeg")
-            except Exception as e:
-                print("GridFS Image Error:", e)
-
-            with app.app_context():
-                db.session.add(Alert(alert_type="Unwanted Pose (Video)", user_email=user_email))
-                db.session.add(ScreenshotAlert(image_path=filename, user_email=user_email, alert_type="Unwanted Pose (Video)"))
-                
-                # Use a separate context to commit because this is running in a generator thread
-                try:
-                    db.session.commit()
-                except Exception as e:
-                    db.session.rollback()
-                    print("DB Commit Error:", e)
-
-            video_filename = None
-            current_time = time.time()
-            if current_time - last_recording_time > 10:
-                video_filename = f"upload_{user_email}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
-                Thread(target=save_incident_video, args=(list(frame_buffer), video_filename)).start()
-                last_recording_time = current_time
-
-            try:
-                mapped_event = map_status(class_name)
-                collection.insert_one({
-                    "event": mapped_event,
-                    "confidence": float(confidence),
-                    "status": "Unsafe",
-                    "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    "video_file": video_filename
-                })
-                was_unsafe = True
-            except Exception as e:
-                print("MongoDB Insertion Error (Video):", e)
-
-            if not sound_thread or not sound_thread.is_alive():
-                sound_thread = Thread(target=play_alert_sound, args=(class_name,))
-                sound_thread.start()
-
-            unwanted_count = 0
-
-        ret, buffer = cv2.imencode('.jpg', frame)
-        yield (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-
-    cap.release()
+    if not cap.isOpened():
+        return
+    try:
+        yield from _process_frame_loop(cap, user_email)
+    finally:
+        cap.release()
 
 
-# ===================== ROUTES =====================
+# ── Routes ───────────────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
 
-# 🔥 FIXED SIGNUP
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     error = None
-
     if request.method == 'POST':
-        name = request.form['name']
-        username = request.form['username']
-        email = request.form['email']
-        password = request.form['password']
-
+        name = request.form.get('name', '').strip()
+        username = request.form.get('username', '').strip()
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
         if not all([name, username, email, password]):
-            error = "All fields required"
-
-        elif len(password) < 8:
-            error = "Password must be 8+ characters"
-
+            error = "All fields are required."
+        elif User.query.filter_by(username=username).first():
+            error = "Username already taken."
+        elif User.query.filter_by(email=email).first():
+            error = "Email already registered."
         else:
-            user = User.query.filter(
-                (User.username == username) | (User.email == email)
-            ).first()
-
-            if user:
-                return render_template('signup.html', error="User already exists!")
-
-            try:
-                new_user = User(name, username, email, password)
-                db.session.add(new_user)
-                db.session.commit()
-                return redirect(url_for('login'))
-
-            except:
-                db.session.rollback()
-                error = "Error creating account"
-
+            user = User(name=name, username=username, email=email, password=password)
+            db.session.add(user)
+            db.session.commit()
+            return redirect(url_for('login'))
     return render_template('signup.html', error=error)
 
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
-        user_input = request.form['username']
-        password = request.form['password']
-
+        identifier = request.form.get('identifier', '').strip()
+        password = request.form.get('password', '')
         user = User.query.filter(
-            (User.username == user_input) | (User.email == user_input)
+            (User.username == identifier) | (User.email == identifier)
         ).first()
-
         if user and user.check_password(password):
             session['user'] = user.email
-            session['admin'] = user.email.endswith("@poseguard.com")
+            session['name'] = user.name
+            session['admin'] = user.email.endswith('@poseguard.com')
             return redirect(url_for('dashboard'))
+        error = "Invalid credentials. Please try again."
+    return render_template('login.html', error=error)
 
-        return render_template('login.html', error="Invalid credentials")
 
-    return render_template('login.html')
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 
 @app.route('/dashboard')
@@ -413,71 +335,46 @@ def dashboard():
 def video_feed():
     if 'user' not in session:
         return redirect(url_for('login'))
-
     return Response(gen_frames(session['user']),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+@app.route('/video_feed/<filename>')
+def video_feed_with_filename(filename):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    filepath = os.path.join(tempfile.gettempdir(), secure_filename(filename))
     return Response(gen_frames_for_file(filepath, session['user']),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
-@app.route('/process_video', methods=['POST'])
-def process_video():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    if 'video' not in request.files:
-        return redirect(request.url)
-
-    file = request.files['video']
-    if file.filename == '' or not allowed_file(file.filename):
-        return redirect(request.url)
-
-    filename = secure_filename(file.filename)
-    temp_path = os.path.join(tempfile.gettempdir(), filename)
-    file.save(temp_path)
-
-    return render_template('video_upload.html', filename=filename)
-
-
-@app.route('/video_upload')
+@app.route('/video_upload', methods=['GET', 'POST'])
 def video_upload():
     if 'user' not in session:
         return redirect(url_for('login'))
-    return render_template('video_upload.html')
-
-
-@app.route('/process-video', methods=['POST'])
-def process_video():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-
-    file = request.files['video']
-    filename = secure_filename(file.filename)
-    temp_path = os.path.join(tempfile.gettempdir(), filename)
-    file.save(temp_path)
-
+    filename = None
+    if request.method == 'POST':
+        file = request.files.get('video')
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            save_path = os.path.join(tempfile.gettempdir(), filename)
+            file.save(save_path)
     return render_template('video_upload.html', filename=filename)
 
 
-# 🔥 FIXED REPORTS ROUTE
 @app.route('/reports')
 def reports():
-    if 'user' not in session or not session.get('admin'):
-        abort(403)
-
+    if not session.get('admin'):
+        return render_template('403.html'), 403
     alerts = Alert.query.order_by(Alert.timestamp.desc()).all()
     screenshots = ScreenshotAlert.query.order_by(ScreenshotAlert.timestamp.desc()).all()
-
     return render_template('reports.html', alerts=alerts, screenshots=screenshots)
 
 
 @app.route('/admin')
 def admin_portal():
-    if 'user' not in session or not session.get('admin'):
-        abort(403)
-
+    if not session.get('admin'):
+        return render_template('403.html'), 403
     shots = ScreenshotAlert.query.order_by(ScreenshotAlert.timestamp.desc()).all()
     return render_template('admin_portal.html', shots=shots)
 
@@ -486,19 +383,19 @@ def admin_portal():
 def about():
     return render_template('about.html')
 
+
 @app.route('/records')
 def view_records():
     if 'user' not in session:
         return redirect(url_for('login'))
-        
-    try:
-        # Fetch all records, sort by time descending using raw python if sort("_id", -1) fails
-        records_data = list(collection.find().sort("_id", -1))
-    except Exception as e:
-        records_data = []
-        print(f"Error fetching from MongoDB: {e}")
-        
-    return render_template('records.html', records=records_data)
+    records = []
+    if mongo_db is not None:
+        try:
+            raw = mongo_db.incidents.find().sort('_id', -1)
+            records = [dict(r, _id=str(r['_id'])) for r in raw]
+        except Exception as e:
+            print(f"[PoseGuard] records fetch error: {e}")
+    return render_template('records.html', records=records)
 
 
 @app.route('/information')
@@ -508,29 +405,20 @@ def information():
 
 @app.route('/media/<filename>')
 def get_media(filename):
+    if not fs:
+        abort(404)
     try:
-        import gridfs
-        file_data = fs.get_last_version(filename)
-        mime_type = "video/mp4" if filename.endswith(".mp4") else "image/jpeg"
-        return Response(file_data.read(), mimetype=mime_type)
+        import io
+        from flask import send_file
+        grid_out = fs.get_last_version(filename=filename)
+        content_type = grid_out.content_type or 'application/octet-stream'
+        return send_file(io.BytesIO(grid_out.read()), mimetype=content_type)
     except gridfs.errors.NoFile:
         abort(404)
     except Exception as e:
-        print(f"GridFS Retrieval Error: {e}")
+        print(f"[PoseGuard] media serve error: {e}")
         abort(500)
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
-
-
-@app.errorhandler(403)
-def forbidden(e):
-    return render_template('403.html'), 403
-
-
-# ===================== RUN =====================
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

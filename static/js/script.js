@@ -1,182 +1,146 @@
-document.addEventListener("DOMContentLoaded", function () {
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ 
-        canvas: document.getElementById("bgCanvas"),
-        alpha: true,
-        antialias: true
+document.addEventListener('DOMContentLoaded', function () {
+  const canvas = document.getElementById('bgCanvas');
+  if (!canvas) return;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setClearColor(0x000000, 0);
+  renderer.setPixelRatio(window.devicePixelRatio);
+
+  const buildingColors = [0x00f3ff, 0xff00ff, 0x0066ff];
+  const buildings = [];
+
+  for (let i = 0; i < 20; i++) {
+    const w = 2 + Math.random() * 3;
+    const h = 10 + Math.random() * 20;
+    const d = 2 + Math.random() * 3;
+    const geo = new THREE.BoxGeometry(w, h, d);
+    const mat = new THREE.MeshBasicMaterial({
+      color: buildingColors[i % buildingColors.length],
+      wireframe: true,
+      transparent: true,
+      opacity: 0.3,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(
+      (Math.random() - 0.5) * 80,
+      (Math.random() - 0.5) * 20,
+      (Math.random() - 0.5) * 80
+    );
+    scene.add(mesh);
+    buildings.push(mesh);
+  }
+
+  const streams = [];
+  for (let i = 0; i < 10; i++) {
+    const points = [];
+    const x = (Math.random() - 0.5) * 60;
+    const z = (Math.random() - 0.5) * 60;
+    for (let j = 0; j < 20; j++) {
+      points.push(x, j * 2 - 20, z);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+    const colors = [];
+    for (let j = 0; j < 20; j++) {
+      const c = new THREE.Color(buildingColors[j % buildingColors.length]);
+      colors.push(c.r, c.g, c.b);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+    const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.5 });
+    const line = new THREE.LineSegments(geo, mat);
+    scene.add(line);
+    streams.push(line);
+  }
+
+  const panels = [];
+  for (let i = 0; i < 5; i++) {
+    const geo = new THREE.PlaneGeometry(10, 10);
+    const mat = new THREE.MeshBasicMaterial({
+      color: buildingColors[i % buildingColors.length],
+      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.2,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(
+      (Math.random() - 0.5) * 60,
+      (Math.random() - 0.5) * 20,
+      (Math.random() - 0.5) * 60
+    );
+    mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+    scene.add(mesh);
+    panels.push(mesh);
+  }
+
+  const particleCount = 5000;
+  const positions = new Float32Array(particleCount * 3);
+  const pColors = new Float32Array(particleCount * 3);
+  const cyanColor = new THREE.Color(0x00f3ff);
+  const magentaColor = new THREE.Color(0xff00ff);
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3]     = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+    const c = i % 2 === 0 ? cyanColor : magentaColor;
+    pColors[i * 3]     = c.r;
+    pColors[i * 3 + 1] = c.g;
+    pColors[i * 3 + 2] = c.b;
+  }
+
+  const particleGeo = new THREE.BufferGeometry();
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  particleGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
+  const particleMat = new THREE.PointsMaterial({
+    size: 0.1,
+    vertexColors: true,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+  });
+  const particles = new THREE.Points(particleGeo, particleMat);
+  scene.add(particles);
+
+  camera.position.z = 30;
+
+  let frame = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    frame++;
+
+    buildings.forEach((b, i) => {
+      b.rotation.y += 0.001 * (i % 2 === 0 ? 1 : -1);
     });
 
+    streams.forEach((s, i) => {
+      s.position.y = Math.sin(frame * 0.01 + i) * 3;
+    });
+
+    panels.forEach((p, i) => {
+      p.rotation.x += 0.003;
+      p.rotation.y += 0.002;
+      p.material.opacity = 0.1 + 0.1 * Math.abs(Math.sin(frame * 0.02 + i));
+    });
+
+    particles.rotation.y += 0.0005;
+    const pos = particleGeo.attributes.position.array;
+    for (let i = 0; i < particleCount; i++) {
+      pos[i * 3 + 1] += Math.sin(frame * 0.01 + i * 0.1) * 0.005;
+    }
+    particleGeo.attributes.position.needsUpdate = true;
+
+    renderer.render(scene, camera);
+  }
+
+  animate();
+
+  window.addEventListener('resize', function () {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setClearColor(0x000000, 0);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    document.body.appendChild(renderer.domElement);
-
-    // Create cyberpunk buildings
-    const buildings = [];
-    const buildingColors = [0x00f3ff, 0xff00ff, 0x0066ff];
-    
-    for (let i = 0; i < 20; i++) {
-        const width = 2 + Math.random() * 3;
-        const height = 10 + Math.random() * 20;
-        const depth = 2 + Math.random() * 3;
-        
-        const geometry = new THREE.BoxGeometry(width, height, depth);
-        const material = new THREE.MeshBasicMaterial({
-            color: buildingColors[Math.floor(Math.random() * buildingColors.length)],
-            wireframe: true,
-            transparent: true,
-            opacity: 0.3
-        });
-        
-        const building = new THREE.Mesh(geometry, material);
-        building.position.x = (Math.random() - 0.5) * 100;
-        building.position.y = height / 2 - 10;
-        building.position.z = (Math.random() - 0.5) * 100;
-        
-        buildings.push(building);
-        scene.add(building);
-    }
-
-    // Create holographic data streams
-    const dataStreams = [];
-    const streamGeometry = new THREE.BufferGeometry();
-    const streamCount = 10;
-    const streamPositions = new Float32Array(streamCount * 6);
-    const streamColors = new Float32Array(streamCount * 6);
-
-    for (let i = 0; i < streamCount; i++) {
-        const startX = (Math.random() - 0.5) * 100;
-        const startY = -10 + Math.random() * 20;
-        const startZ = (Math.random() - 0.5) * 100;
-        
-        streamPositions[i * 6] = startX;
-        streamPositions[i * 6 + 1] = startY;
-        streamPositions[i * 6 + 2] = startZ;
-        streamPositions[i * 6 + 3] = startX;
-        streamPositions[i * 6 + 4] = startY + 30;
-        streamPositions[i * 6 + 5] = startZ;
-
-        const color = buildingColors[Math.floor(Math.random() * buildingColors.length)];
-        streamColors[i * 6] = ((color >> 16) & 255) / 255;
-        streamColors[i * 6 + 1] = ((color >> 8) & 255) / 255;
-        streamColors[i * 6 + 2] = (color & 255) / 255;
-        streamColors[i * 6 + 3] = ((color >> 16) & 255) / 255;
-        streamColors[i * 6 + 4] = ((color >> 8) & 255) / 255;
-        streamColors[i * 6 + 5] = (color & 255) / 255;
-    }
-
-    streamGeometry.setAttribute('position', new THREE.BufferAttribute(streamPositions, 3));
-    streamGeometry.setAttribute('color', new THREE.BufferAttribute(streamColors, 3));
-
-    const streamMaterial = new THREE.LineBasicMaterial({
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.5
-    });
-
-    const streamMesh = new THREE.LineSegments(streamGeometry, streamMaterial);
-    scene.add(streamMesh);
-
-    // Create holographic panels
-    const panels = [];
-    for (let i = 0; i < 5; i++) {
-        const panelGeometry = new THREE.PlaneGeometry(10, 10);
-        const panelMaterial = new THREE.MeshBasicMaterial({
-            color: buildingColors[Math.floor(Math.random() * buildingColors.length)],
-            transparent: true,
-            opacity: 0.2,
-            side: THREE.DoubleSide
-        });
-        
-        const panel = new THREE.Mesh(panelGeometry, panelMaterial);
-        panel.position.x = (Math.random() - 0.5) * 100;
-        panel.position.y = Math.random() * 20;
-        panel.position.z = (Math.random() - 0.5) * 100;
-        panel.rotation.x = Math.random() * Math.PI;
-        panel.rotation.y = Math.random() * Math.PI;
-        
-        panels.push(panel);
-        scene.add(panel);
-    }
-
-    // Create floating particles with cyberpunk colors
-    const particlesGeometry = new THREE.BufferGeometry();
-    const particlesCount = 5000;
-    const posArray = new Float32Array(particlesCount * 3);
-    const colorArray = new Float32Array(particlesCount * 3);
-
-    for (let i = 0; i < particlesCount * 3; i += 3) {
-        posArray[i] = (Math.random() - 0.5) * 100;
-        posArray[i + 1] = (Math.random() - 0.5) * 100;
-        posArray[i + 2] = (Math.random() - 0.5) * 100;
-
-        const color = Math.random() < 0.5 ? 0x00f3ff : 0xff00ff;
-        colorArray[i] = ((color >> 16) & 255) / 255;
-        colorArray[i + 1] = ((color >> 8) & 255) / 255;
-        colorArray[i + 2] = (color & 255) / 255;
-    }
-
-    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-    particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
-    
-    const particlesMaterial = new THREE.PointsMaterial({
-        size: 0.1,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.8,
-        blending: THREE.AdditiveBlending
-    });
-    
-    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
-    scene.add(particlesMesh);
-
-    camera.position.z = 30;
-
-    // Animation
-    function animate() {
-        requestAnimationFrame(animate);
-
-        // Animate buildings
-        buildings.forEach((building, index) => {
-            building.rotation.y += 0.001;
-            building.position.y = building.position.y + Math.sin(Date.now() * 0.001 + index) * 0.05;
-        });
-
-        // Animate data streams
-        const streamPositions = streamMesh.geometry.attributes.position.array;
-        for (let i = 0; i < streamCount; i++) {
-            const offset = i * 6;
-            streamPositions[offset + 1] = -10 + Math.sin(Date.now() * 0.001 + i) * 5;
-            streamPositions[offset + 4] = 20 + Math.sin(Date.now() * 0.001 + i) * 5;
-        }
-        streamMesh.geometry.attributes.position.needsUpdate = true;
-
-        // Animate holographic panels
-        panels.forEach((panel, index) => {
-            panel.rotation.x += 0.001;
-            panel.rotation.y += 0.001;
-            panel.position.y = panel.position.y + Math.sin(Date.now() * 0.001 + index) * 0.1;
-            panel.material.opacity = 0.2 + Math.sin(Date.now() * 0.001 + index) * 0.1;
-        });
-
-        // Animate particles with wave effect
-        particlesMesh.rotation.y += 0.0005;
-        const positions = particlesMesh.geometry.attributes.position.array;
-        for (let i = 0; i < positions.length; i += 3) {
-            positions[i + 1] += Math.sin(Date.now() * 0.001 + i) * 0.01;
-        }
-        particlesMesh.geometry.attributes.position.needsUpdate = true;
-
-        renderer.render(scene, camera);
-    }
-
-    // Handle window resize
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    animate();
+  });
 });

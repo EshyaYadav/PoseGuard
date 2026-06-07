@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
+{% block title %}Access Denied — PoseGuard{% endblock %}
 {% block content %}
-<div class="text-center py-16">
-    <h1 class="text-4xl font-bold text-red-500">🚫 Access Denied</h1>
-    <p class="mt-4 text-lg text-gray-300">Only Admins can access this page.</p>
-    <a href="{{ url_for('dashboard') }}" class="mt-6 inline-block px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Go Back</a>
+<div class="flex items-center justify-center min-h-[60vh]">
+  <div class="glass-card text-center" style="max-width:500px;width:100%;">
+    <div style="font-size:4rem;margin-bottom:16px;">🚫</div>
+    <h1 style="font-family:'Orbitron',sans-serif;color:#ff4444;font-size:2rem;text-transform:uppercase;margin-bottom:12px;text-shadow:0 0 15px #ff4444;">Access Denied</h1>
+    <p style="color:#ccc;margin-bottom:24px;line-height:1.7;">Only Admins can access this page.<br />Please contact your administrator if you believe this is an error.</p>
+    <a href="{{ url_for('dashboard') }}" class="btn-primary" style="text-decoration:none;">← Back to Dashboard</a>
+  </div>
 </div>
 {% endblock %}

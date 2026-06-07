@@ -1,21 +1,17 @@
-/* === Smooth Scrolling === */
 html {
   scroll-behavior: smooth;
 }
 
-/* === Font Setup === */
 body {
-  font-family: 'Orbitron', 'Rajdhani', sans-serif;
+  font-family: 'Rajdhani', 'Orbitron', sans-serif;
+  background-color: #0a0a15;
   color: #ffffff;
+  overflow-x: hidden;
+  perspective: 1000px;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  background: #0a0a15;
-  position: relative;
-  perspective: 1000px;
 }
 
-/* === Cyberpunk Background === */
 .cyber-background {
   position: fixed;
   top: 0;
@@ -23,11 +19,11 @@ body {
   width: 100%;
   height: 100%;
   z-index: -2;
-  background: 
-    radial-gradient(circle at 20% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(0, 102, 255, 0.1) 0%, transparent 50%);
-  animation: backgroundPulse 8s ease-in-out infinite;
+  background:
+    radial-gradient(ellipse at 20% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse at 50% 50%, rgba(0, 102, 255, 0.1) 0%, transparent 70%);
+  animation: backgroundPulse 8s ease-in-out infinite alternate;
 }
 
 .cyber-grid {
@@ -37,242 +33,233 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background-image: 
-    linear-gradient(to right, rgba(0, 243, 255, 0.1) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+  background-image:
+    linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
   background-size: 50px 50px;
   transform: perspective(1000px) rotateX(60deg);
-  animation: gridMove 15s linear infinite;
+  transform-origin: top center;
+  animation: gridMove 20s linear infinite;
 }
 
-@keyframes backgroundPulse {
-  0% { opacity: 0.8; }
-  50% { opacity: 1; }
-  100% { opacity: 0.8; }
-}
-
-@keyframes gridMove {
-  0% { transform: perspective(1000px) rotateX(60deg) translateY(0); }
-  100% { transform: perspective(1000px) rotateX(60deg) translateY(50px); }
-}
-
-/* === Floating Shapes === */
 .floating-shape {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, #00f7ff, #ff00cc);
+  background: linear-gradient(135deg, #00f3ff, #ff00ff);
   opacity: 0.15;
-  animation: float 10s ease-in-out infinite alternate;
-  z-index: -2;
+  animation: float 6s ease-in-out infinite;
 }
 
 .floating-shape:nth-child(1) {
-  width: 250px;
-  height: 250px;
+  width: 80px;
+  height: 80px;
   top: 10%;
   left: 5%;
+  animation-delay: 0s;
 }
 
 .floating-shape:nth-child(2) {
-  width: 150px;
-  height: 150px;
-  bottom: 15%;
-  right: 10%;
+  width: 120px;
+  height: 120px;
+  top: 60%;
+  right: 8%;
+  animation-delay: 2s;
 }
 
 .floating-shape:nth-child(3) {
-  width: 180px;
-  height: 180px;
-  top: 30%;
-  right: 25%;
+  width: 60px;
+  height: 60px;
+  bottom: 15%;
+  left: 20%;
+  animation-delay: 4s;
 }
 
-@keyframes float {
-  0% {
-      transform: translateY(0px) rotate(0deg);
-  }
-  100% {
-      transform: translateY(20px) rotate(360deg);
-  }
-}
-
-/* === Cards / Boxes === */
-.glass-card, .neon-box, .card.floating {
+.glass-card,
+.neon-box,
+.card.floating {
   background: rgba(10, 10, 21, 0.8);
   border: 1px solid #00f3ff;
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-radius: 15px;
   padding: 25px;
-  margin: 20px auto;
   box-shadow: 0 0 20px #00f3ff, 0 0 40px rgba(255, 0, 255, 0.3);
-  transition: all 0.4s ease-in-out;
-  transform-style: preserve-3d;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.glass-card:hover, .neon-box:hover, .card.floating:hover {
+.glass-card:hover,
+.neon-box:hover,
+.card.floating:hover {
   transform: scale(1.03) translateZ(20px);
-  box-shadow: 0 0 30px #00f3ff, 0 0 50px rgba(255, 0, 255, 0.5);
+  box-shadow: 0 0 30px #00f3ff, 0 0 60px rgba(255, 0, 255, 0.5);
 }
 
-/* === Input Field === */
 .input-field {
   width: 100%;
-  padding: 14px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
   border: 1px solid #00f3ff;
-  color: #fff;
-  transition: 0.3s;
+  color: #ffffff;
   font-family: 'Rajdhani', sans-serif;
+  font-size: 1rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: box-shadow 0.3s ease;
 }
 
 .input-field:focus {
-  box-shadow: 0 0 15px #00f3ff;
-  border-color: #ff00ff;
+  box-shadow: 0 0 10px #00f3ff, 0 0 20px rgba(0, 243, 255, 0.4);
 }
 
-/* === Button === */
+.input-field::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .btn-primary {
-  background: linear-gradient(90deg, #00f3ff, #ff00ff);
-  padding: 12px 20px;
-  border-radius: 10px;
+  background: linear-gradient(135deg, #00f3ff, #ff00ff);
   color: #0a0a15;
-  border: none;
-  font-weight: bold;
   font-family: 'Orbitron', sans-serif;
   text-transform: uppercase;
+  font-weight: 700;
   letter-spacing: 2px;
-  box-shadow: 0 0 20px #00f3ff;
-  transition: all 0.3s ease;
-  transform-style: preserve-3d;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.5);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .btn-primary:hover {
-  transform: scale(1.1) translateZ(10px);
-  box-shadow: 0 0 30px #ff00ff;
+  transform: scale(1.05);
+  box-shadow: 0 0 30px #00f3ff, 0 0 50px rgba(255, 0, 255, 0.5);
 }
 
-/* === Scrollable Content Wrapper === */
 .scrollable-section {
   max-height: 500px;
   overflow-y: auto;
-  padding-right: 10px;
   scrollbar-width: thin;
-  scrollbar-color: #00f7ff transparent;
+  scrollbar-color: #00f3ff transparent;
 }
 
 .scrollable-section::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .scrollable-section::-webkit-scrollbar-thumb {
-  background-color: #00f7ff;
-  border-radius: 4px;
+  background: #00f3ff;
+  border-radius: 3px;
 }
 
-.scrollable-section::-webkit-scrollbar-thumb:hover {
-  background-color: #cc147f;
-}
-
-/* === Team Cards === */
 #teamScroll {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
+  scroll-snap-type: x mandatory;
   gap: 20px;
   padding: 40px 20px;
-  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  scrollbar-color: #00f3ff transparent;
+}
+
+#teamScroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+#teamScroll::-webkit-scrollbar-thumb {
+  background: #00f3ff;
+  border-radius: 3px;
 }
 
 .team-card {
   scroll-snap-align: center;
   min-width: 320px;
-  background: rgba(10, 10, 21, 0.8);
-  border: 2px solid #00f3ff;
-  box-shadow: 0 0 20px #00f3ff;
+  background: rgba(10, 10, 21, 0.85);
+  border: 1px solid #00f3ff;
+  box-shadow: 0 0 20px #00f3ff, 0 0 40px rgba(255, 0, 255, 0.2);
   border-radius: 20px;
-  padding: 20px;
   text-align: center;
-  transition: all 0.3s ease;
-  transform-style: preserve-3d;
+  padding: 30px 20px;
+  transition: transform 0.3s ease;
 }
 
 .team-card:hover {
-  transform: scale(1.05) translateZ(20px);
-  box-shadow: 0 0 30px #ff00ff;
+  transform: scale(1.03);
 }
 
 .team-card img {
   width: 180px;
   height: 180px;
-  object-fit: cover;
   border-radius: 50%;
-  margin-bottom: 10px;
-  border: 2px solid #00f3ff;
-  box-shadow: 0 0 20px #00f3ff;
-  transition: all 0.3s ease;
+  border: 3px solid #00f3ff;
+  object-fit: cover;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
 }
 
 .team-card img:hover {
-  transform: scale(1.1) rotate(5deg);
-  box-shadow: 0 0 30px #ff00ff;
+  transform: rotate(5deg) scale(1.1);
+  box-shadow: 0 0 25px #00f3ff;
 }
 
-/* === Text Utilities === */
 .neon-text {
   color: #00f3ff;
-  text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff, 0 0 30px #00f3ff;
-  animation: textGlow 3s ease-in-out infinite;
+  text-shadow:
+    0 0 10px #00f3ff,
+    0 0 20px #00f3ff,
+    0 0 40px #00f3ff;
+  animation: textGlow 2s ease-in-out infinite alternate;
 }
 
 .neon-paragraph {
   color: #e0f7ff;
-  text-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+  text-shadow: 0 0 8px rgba(255, 0, 255, 0.4);
   line-height: 1.8;
 }
 
-@keyframes textGlow {
-  0% { text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff, 0 0 30px #00f3ff; }
-  50% { text-shadow: 0 0 20px #00f3ff, 0 0 30px #00f3ff, 0 0 40px #00f3ff; }
-  100% { text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff, 0 0 30px #00f3ff; }
-}
-
-/* === Section Title Styling === */
 .section-title {
   font-size: 2.5rem;
   text-align: center;
-  margin-top: 60px;
   text-transform: uppercase;
   color: #00f3ff;
-  text-shadow: 0 0 20px #00f3ff;
   font-family: 'Orbitron', sans-serif;
-  transform-style: preserve-3d;
-  animation: titleFloat 4s ease-in-out infinite;
+  animation: titleFloat 3s ease-in-out infinite alternate;
+  margin-bottom: 2rem;
+}
+
+@keyframes backgroundPulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+@keyframes float {
+  0%   { transform: translateY(0px); }
+  50%  { transform: translateY(-20px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes gridMove {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 50px; }
+}
+
+@keyframes textGlow {
+  0%   { text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff; }
+  100% { text-shadow: 0 0 20px #00f3ff, 0 0 40px #00f3ff, 0 0 60px #00f3ff; }
 }
 
 @keyframes titleFloat {
-  0% { transform: translateY(0) translateZ(0); }
-  50% { transform: translateY(-10px) translateZ(20px); }
-  100% { transform: translateY(0) translateZ(0); }
+  0%   { transform: translateY(0px); }
+  100% { transform: translateY(-8px); }
 }
 
-/* === Floating Stickers/Icons (Optional) === */
-.sticker {
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  background-image: url('/static/img/favicon.png'); /* Replace with your icon path */
-  background-size: contain;
-  background-repeat: no-repeat;
-  animation: floatSticker 6s infinite ease-in-out alternate;
+canvas#bgCanvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: -1;
-}
-
-.sticker:nth-child(1) { top: 20%; left: 10%; }
-.sticker:nth-child(2) { bottom: 20%; right: 15%; }
-
-@keyframes floatSticker {
-  0% { transform: translateY(0) rotate(0deg); }
-  100% { transform: translateY(-10px) rotate(360deg); }
+  pointer-events: none;
 }

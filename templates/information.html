@@ -1,38 +1,24 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
+{% block title %}Information — PoseGuard{% endblock %}
 {% block content %}
-
-<div class="container mx-auto text-center fade-in py-10">
-    <div class="card floating bg-gray-900 p-8 rounded-lg shadow-lg">
-        <h1 class="text-4xl font-bold neon-text">About This Project</h1>
-        <p class="mt-6 text-lg neon-paragraph">
-            Driver Unwanted Pose Detection System is designed to monitor driver
-            behaviour in real-time, detect distractions, and provide instant alerts to
-            prevent accidents.
-        </p>
-        <p class="mt-4 neon-paragraph">
-            This system leverages computer vision and deep learning techniques to
-            analyse live video feeds, classify driver activities, and detect unwanted
-            poses indicative of distraction. When a driver is found engaging in unsafe
-            behaviour, the system issues real-time warnings and transmits feedback
-            to the transport facility owner or service provider for further action.
-        </p>
-
-        <p class="mt-4 neon-paragraph">
-            The project integrates various AI-powered modules, including image
-            preprocessing, real-time video processing, distraction detection, alert
-            generation, and remote reporting. By deploying this solution in cabs,
-            transport services, and fleet management systems, organizations can
-            enhance driver accountability, passenger safety, and operational
-            efficiency.
-        </p>
-        <p class="mt-4 neon-paragraph">
-            This project aims to create a scalable, efficient, and cost-effective
-            solution to minimize accidents, promote responsible driving, and contribute
-            to safer roads.
-        </p>
-        <a href="/" class="mt-6 inline-block bg-blue-500 px-6 py-2 rounded text-white button-hover shadow-lg hover:bg-blue-600 transition">Back to Home</a>
+<h1 class="section-title">ℹ️ About PoseGuard</h1>
+<div class="flex justify-center">
+  <div class="card floating" style="max-width:760px;width:100%;">
+    <p class="neon-paragraph" style="margin-bottom:20px;">
+      <strong style="color:#00f3ff;">PoseGuard</strong> is an advanced AI-powered driver monitoring system designed to enhance road safety through real-time detection of unsafe driver behaviours. Using your vehicle's cabin camera, PoseGuard continuously analyses the driver's pose and posture, instantly identifying dangerous actions such as phone use, distracted driving, drowsiness, and more.
+    </p>
+    <p class="neon-paragraph" style="margin-bottom:20px;">
+      Built on state-of-the-art <strong style="color:#00f3ff;">computer vision and deep learning</strong> techniques, PoseGuard leverages a Convolutional Neural Network (CNN) trained on thousands of real-world driving scenarios. The model classifies driver behaviour into 8 distinct categories with high accuracy, enabling proactive intervention before incidents escalate.
+    </p>
+    <p class="neon-paragraph" style="margin-bottom:20px;">
+      PoseGuard's intelligent alert system includes <strong style="color:#00f3ff;">voice announcements</strong> via text-to-speech technology, real-time screenshot capture of unsafe events, and automatic video clip logging. All incidents are stored securely in <strong style="color:#ff00ff;">MongoDB</strong> with structured metadata including event type, confidence score, timestamp, and driver identity.
+    </p>
+    <p class="neon-paragraph" style="margin-bottom:30px;">
+      Designed for fleet operators, transport companies, and safety-conscious individuals, PoseGuard provides a <strong style="color:#00f3ff;">scalable, cloud-ready</strong> solution that integrates seamlessly with existing vehicle monitoring infrastructure. The admin portal gives safety managers complete visibility into driver behaviour patterns and incident history.
+    </p>
+    <div style="text-align:center;">
+      <a href="{{ url_for('index') }}" class="btn-primary" style="text-decoration:none;">← Back to Home</a>
     </div>
+  </div>
 </div>
-
 {% endblock %}

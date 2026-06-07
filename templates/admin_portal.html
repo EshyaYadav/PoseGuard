@@ -1,41 +1,34 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
+{% block title %}Admin Portal — PoseGuard{% endblock %}
 {% block content %}
-<div class="background-wrapper">
-    <div class="floating-shape shape1"></div>
-    <div class="floating-shape shape2"></div>
-    <div class="floating-shape shape3"></div>
-    <div class="sticker sticker1"></div>
-    <div class="sticker sticker2"></div>
-</div>
+<h1 class="section-title">🛡️ Admin Portal</h1>
+<h2 style="font-family:'Orbitron',sans-serif;color:#ff00ff;font-size:1rem;text-transform:uppercase;margin-bottom:24px;text-align:center;">Unwanted Pose Screenshots</h2>
 
-
-<!-- Main Content Container -->
-<div class="container mx-auto px-6 py-10 relative z-10">
-    <h2 class="section-title mb-10" id="poseTitle">Unwanted Pose Screenshots</h2>
-
-    {% if shots %}
-    <div class="scrollable-section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for shot in shots %}
-        <div class="glass-card shadow-lg">
-            <img src="{{ url_for('get_media', filename=shot.image_path) }}"
-                 class="w-full h-48 object-cover rounded mb-4 shadow-lg border border-blue-500">
-            <p class="neon-paragraph"><strong>Email:</strong> {{ shot.user_email }}</p>
-            <p class="neon-paragraph"><strong>Type:</strong> {{ shot.alert_type }}</p>
-            <p class="text-sm text-gray-400"><strong>Time:</strong> {{ shot.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-        </div>
-        {% endfor %}
+{% if shots %}
+<div class="scrollable-section">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="shot-grid">
+    {% for shot in shots %}
+    <div class="glass-card shot-card" style="padding:16px;">
+      <img src="{{ url_for('get_media', filename=shot.image_path) }}"
+           style="width:100%;border-radius:10px;margin-bottom:12px;border:1px solid rgba(255,0,255,0.3);"
+           alt="Incident Screenshot"
+           onerror="this.style.display='none'" />
+      <div style="font-family:'Orbitron',sans-serif;color:#ff00ff;font-size:0.8rem;text-transform:uppercase;margin-bottom:6px;">{{ shot.alert_type }}</div>
+      <div style="color:#ccc;font-size:0.82rem;margin-bottom:4px;">👤 {{ shot.user_email }}</div>
+      <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;">🕐 {{ shot.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</div>
     </div>
-    {% else %}
-    <p class="text-center text-lg neon-paragraph mt-6">No screenshots have been recorded yet.</p>
-    {% endif %}
+    {% endfor %}
+  </div>
 </div>
-
-<!-- Animations -->
+{% else %}
+<div class="glass-card" style="text-align:center;padding:60px;color:rgba(255,255,255,0.4);">
+  <div style="font-size:3rem;margin-bottom:16px;">📭</div>
+  <p>No incident screenshots recorded yet.</p>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        gsap.from("#poseTitle", { duration: 1, opacity: 0, y: -50, ease: "power3.out" });
-        gsap.from(".glass-card", { duration: 1, opacity: 0, y: 50, stagger: 0.2, ease: "power2.out" });
-    });
+  gsap.from('.shot-card', { opacity: 0, scale: 0.9, duration: 0.5, stagger: 0.1, ease: 'back.out(1.7)' });
 </script>
 {% endblock %}

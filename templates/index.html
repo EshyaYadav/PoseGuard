@@ -1,600 +1,327 @@
 <!DOCTYPE html>
 <html lang="en">
-
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PoseGuard - Driver Safety AI</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PoseGuard — Driver Safety AI</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.7.1/gsap.min.js"></script>
   <style>
     :root {
       --neon-cyan: #00f3ff;
       --neon-magenta: #ff00ff;
       --neon-blue: #0066ff;
-      --neon-green: #00ff9d;
-      --neon-pink: #ff1493;
-      --dark-bg: #0a0a15;
-      --darker-bg: #050508;
-      --card-bg: rgba(10, 10, 21, 0.8);
-      --text-glow: 0 0 10px rgba(0, 243, 255, 0.5);
-      --section-spacing: 8rem;
+      --bg-dark: #0a0a15;
+      --card-bg: rgba(10, 10, 21, 0.85);
     }
-
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       font-family: 'Rajdhani', sans-serif;
-      background: var(--dark-bg);
-      color: #ffffff;
+      background-color: var(--bg-dark);
+      color: #fff;
       overflow-x: hidden;
-      line-height: 1.6;
-      perspective: 1000px;
     }
-
-
-    #three-container {
+    canvas#bgCanvas {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       z-index: -1;
       pointer-events: none;
     }
-
-
-    .cyber-background {
+    .cyber-grid-bg {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -2;
-      background: 
-        radial-gradient(circle at 20% 20%, rgba(0, 243, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.1) 0%, transparent 50%),
-        radial-gradient(circle at 50% 50%, rgba(0, 102, 255, 0.1) 0%, transparent 50%);
-      animation: backgroundPulse 8s ease-in-out infinite;
-    }
-
-
-    .cyber-particles {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       z-index: -1;
-      pointer-events: none;
-    }
-
-
-    .cyber-particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: radial-gradient(circle, 
-        var(--neon-cyan),
-        var(--neon-magenta),
-        transparent
-      );
-      border-radius: 50%;
-      box-shadow: 0 0 15px var(--neon-cyan);
-      animation: particleFloat 6s ease-in-out infinite;
-    }
-
-
-    .cyber-connection {
-      position: absolute;
-      height: 1px;
-      background: linear-gradient(90deg, 
-        transparent,
-        var(--neon-cyan),
-        var(--neon-magenta),
-        transparent
-      );
-      transform-origin: left;
-      animation: connectionFlow 4s linear infinite;
-    }
-
-
-    .cyber-grid {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      background-image: 
-        linear-gradient(to right, rgba(0, 243, 255, 0.1) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+      background-image:
+        linear-gradient(rgba(0,243,255,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,243,255,0.07) 1px, transparent 1px);
       background-size: 50px 50px;
-      transform: perspective(1000px) rotateX(60deg);
-      animation: gridMove 15s linear infinite;
+      animation: gridMove 20s linear infinite;
     }
-
-
-    .navbar {
-      background: rgba(10, 10, 21, 0.95);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(0, 243, 255, 0.1);
-      transform-style: preserve-3d;
-      transform: translateZ(20px);
+    @keyframes gridMove {
+      0% { background-position: 0 0; }
+      100% { background-position: 0 50px; }
     }
-
-
-    .navbar-brand {
+    @keyframes float {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
+    @keyframes textGlow {
+      0% { text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan); }
+      100% { text-shadow: 0 0 20px var(--neon-cyan), 0 0 50px var(--neon-cyan), 0 0 80px var(--neon-cyan); }
+    }
+    /* Navbar */
+    .navbar { background: rgba(10,10,21,0.92) !important; border-bottom: 1px solid var(--neon-cyan); backdrop-filter: blur(12px); }
+    .navbar-brand { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan) !important; font-size: 1.3rem; text-shadow: 0 0 10px var(--neon-cyan); }
+    .nav-link { font-family: 'Orbitron', sans-serif; color: #ccc !important; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.5px; transition: color 0.2s, text-shadow 0.2s; }
+    .nav-link:hover { color: var(--neon-cyan) !important; text-shadow: 0 0 8px var(--neon-cyan); }
+    /* Hero */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 80px 20px;
+      position: relative;
+    }
+    .hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(3rem, 8vw, 6rem);
+      font-weight: 900;
+      color: var(--neon-cyan);
+      animation: textGlow 2s ease-in-out infinite alternate;
+      margin-bottom: 12px;
+    }
+    .hero-subtitle {
+      font-size: clamp(1.2rem, 3vw, 2rem);
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: 'Orbitron', sans-serif;
+      margin-bottom: 40px;
+    }
+    .hero-btn {
+      display: inline-block;
+      padding: 16px 48px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      color: var(--bg-dark);
       font-family: 'Orbitron', sans-serif;
       font-weight: 700;
-      font-size: 2rem;
-      color: var(--neon-cyan);
-      text-shadow: var(--text-glow);
-      transform-style: preserve-3d;
-      animation: textGlow 3s ease-in-out infinite;
-    }
-
-
-    .nav-link {
-      color: #fff;
-      font-family: 'Orbitron', sans-serif;
       text-transform: uppercase;
       letter-spacing: 2px;
-      margin: 0 1rem;
-      transition: all 0.3s ease;
-      transform-style: preserve-3d;
+      border-radius: 8px;
+      text-decoration: none;
+      box-shadow: 0 0 25px rgba(0,243,255,0.5);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-
-
-    .nav-link:hover {
-      color: var(--neon-cyan);
-      text-shadow: var(--text-glow);
-      transform: translateZ(10px);
-    }
-
-
-    .hero {
-      position: relative;
-      min-height: 100vh;
-      width: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      transform-style: preserve-3d;
-    }
-
-
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      max-width: 1200px;
-      width: 100%;
-      padding: 3rem;
-      text-align: center;
-      background: rgba(10, 10, 21, 0.2);
-      backdrop-filter: blur(20px);
-      border-radius: 30px;
-      border: 1px solid rgba(0, 243, 255, 0.2);
-      box-shadow: 0 0 50px rgba(0, 243, 255, 0.1);
-      transform-style: preserve-3d;
-      transform: translateZ(30px);
-      animation: contentFloat 6s ease-in-out infinite;
-    }
-
-
-    .hero h1 {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(2.5rem, 8vw, 5rem);
-      font-weight: 900;
-      line-height: 1.1;
-      margin-bottom: 1.5rem;
-      color: var(--neon-cyan);
-      text-shadow: var(--text-glow);
-      transform-style: preserve-3d;
-      animation: titleFloat 4s ease-in-out infinite;
-    }
-
-
-    .hero h1 span {
-  display: block;
-  font-size: clamp(2rem, 6vw, 4rem);
-  background: linear-gradient(45deg, var(--neon-cyan), var(--neon-magenta));
-
-  background-clip: text;              /* ✅ add this line */
-  -webkit-background-clip: text;
-
-  -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.3));
-  transform-style: preserve-3d;
-  animation: spanGlow 3s ease-in-out infinite;
-}
-
-
-    .hero p {
-      font-size: clamp(1rem, 3vw, 1.5rem);
-      color: #fff;
-      margin: 0 auto 2rem;
-      max-width: 800px;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-
-
-    .btn-glow {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 1.1rem;
-      padding: 0.8rem 2rem;
-      background: linear-gradient(45deg, var(--neon-cyan), var(--neon-magenta));
-      color: var(--darker-bg);
-      border: none;
-      border-radius: 50px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-      font-weight: 600;
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-      box-shadow: 0 5px 15px rgba(0, 243, 255, 0.3);
-      transform-style: preserve-3d;
-    }
-
-
-    .btn-glow:hover {
-      transform: translateY(-3px) scale(1.05) translateZ(20px);
-      box-shadow: 0 8px 25px rgba(0, 243, 255, 0.5);
-    }
-
-
-    .card {
-      background: var(--card-bg);
-      border: 1px solid rgba(0, 243, 255, 0.2);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      padding: 2rem;
-      color: #fff;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      transform-style: preserve-3d;
-      transform: translateZ(10px);
-    }
-
-
-    .card:hover {
-      transform: translateY(-10px) scale(1.02) translateZ(30px);
-      box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-      border-color: var(--neon-cyan);
-    }
-
-
-    .card h3 {
-      color: var(--neon-cyan);
-      font-family: 'Orbitron', sans-serif;
-      margin-bottom: 1rem;
-      text-shadow: var(--text-glow);
-      transform-style: preserve-3d;
-    }
-
-
-    .card p {
-      transform: translateZ(10px);
-    }
-
-
-    section {
-      padding: var(--section-spacing) 0;
-      position: relative;
-      transform-style: preserve-3d;
-    }
-
-
+    .hero-btn:hover { transform: scale(1.05); box-shadow: 0 0 40px var(--neon-cyan), 0 0 60px rgba(255,0,255,0.4); color: var(--bg-dark); }
+    /* Sections */
+    section { padding: 80px 20px; position: relative; }
     .section-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 2.8rem;
-      text-align: center;
-      margin-bottom: 3rem;
+      font-size: 2rem;
       color: var(--neon-cyan);
-      text-shadow: var(--text-glow);
-      transform-style: preserve-3d;
-      transform: translateZ(20px);
-      animation: titleGlow 3s ease-in-out infinite;
+      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 50px;
+      text-shadow: 0 0 15px var(--neon-cyan);
     }
-
-
-    @keyframes backgroundPulse {
-      0%, 100% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.2); opacity: 0.8; }
+    /* Cards */
+    .cyber-card {
+      background: var(--card-bg);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(0,243,255,0.2), 0 0 40px rgba(255,0,255,0.1);
+      transition: transform 0.3s, box-shadow 0.3s;
+      height: 100%;
     }
-
-
-    @keyframes particleFloat {
-      0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
-      50% { transform: translate(30px, -20px) scale(1.2); opacity: 0.8; }
+    .cyber-card:hover { transform: translateY(-6px) scale(1.02); box-shadow: 0 0 30px var(--neon-cyan), 0 0 60px rgba(255,0,255,0.3); }
+    .cyber-card .icon { font-size: 2.5rem; color: var(--neon-cyan); margin-bottom: 16px; }
+    .cyber-card h4 { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); font-size: 1rem; text-transform: uppercase; margin-bottom: 12px; }
+    .cyber-card p { color: #ccc; line-height: 1.7; }
+    /* Testimonials */
+    .testimonial-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(255,0,255,0.4);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 0 20px rgba(255,0,255,0.2);
+      transition: transform 0.3s;
     }
-
-
-    @keyframes connectionFlow {
-      0% { transform: scaleX(0); opacity: 0; }
-      50% { transform: scaleX(1); opacity: 0.6; }
-      100% { transform: scaleX(0); opacity: 0; }
+    .testimonial-card:hover { transform: translateY(-4px); }
+    .testimonial-card p { font-size: 1.05rem; color: #ddd; line-height: 1.8; font-style: italic; }
+    .testimonial-card .author { color: var(--neon-magenta); font-family: 'Orbitron', sans-serif; font-size: 0.8rem; margin-top: 16px; }
+    /* Contact */
+    .contact-form input, .contact-form textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #fff;
+      font-family: 'Rajdhani', sans-serif;
+      margin-bottom: 16px;
+      outline: none;
+      transition: box-shadow 0.3s;
     }
-
-
-    @keyframes gridMove {
-      0% { transform: perspective(1000px) rotateX(60deg) translateY(0); }
-      100% { transform: perspective(1000px) rotateX(60deg) translateY(50px); }
+    .contact-form input:focus, .contact-form textarea:focus { box-shadow: 0 0 10px var(--neon-cyan); }
+    .contact-form input::placeholder, .contact-form textarea::placeholder { color: rgba(255,255,255,0.3); }
+    .contact-btn {
+      padding: 13px 40px;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      color: var(--bg-dark);
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      box-shadow: 0 0 20px rgba(0,243,255,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-
-
-    @keyframes contentFloat {
-      0%, 100% { transform: translateZ(30px) translateY(0); }
-      50% { transform: translateZ(30px) translateY(-20px); }
+    .contact-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px var(--neon-cyan); }
+    /* Footer */
+    footer {
+      background: rgba(10,10,21,0.95);
+      border-top: 1px solid var(--neon-cyan);
+      padding: 30px 20px;
+      text-align: center;
     }
-
-
-    @keyframes titleFloat {
-      0%, 100% { transform: translateZ(0); }
-      50% { transform: translateZ(20px); }
-    }
-
-
-    @keyframes spanGlow {
-      0%, 100% { filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.3)); }
-      50% { filter: drop-shadow(0 0 20px rgba(0, 243, 255, 0.6)); }
-    }
-
-
-    @keyframes textGlow {
-      0%, 100% { text-shadow: 0 0 10px rgba(0, 243, 255, 0.5); }
-      50% { text-shadow: 0 0 20px rgba(0, 243, 255, 0.8); }
-    }
-
-
-    @keyframes titleGlow {
-      0%, 100% { 
-        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
-        transform: translateZ(20px);
-      }
-      50% { 
-        text-shadow: 0 0 20px rgba(0, 243, 255, 0.8);
-        transform: translateZ(30px);
-      }
-    }
-
-
-    @media (max-width: 768px) {
-      :root {
-        --section-spacing: 4rem;
-      }
-
-      .hero h1 {
-        font-size: 3rem;
-      }
-     
-      .hero p {
-        font-size: 1.2rem;
-      }
-     
-      .card-container {
-        grid-template-columns: 1fr;
-      }
-    }
+    footer .social-icons a { color: var(--neon-cyan); font-size: 1.5rem; margin: 0 12px; transition: color 0.2s, text-shadow 0.2s; }
+    footer .social-icons a:hover { color: var(--neon-magenta); text-shadow: 0 0 10px var(--neon-magenta); }
+    footer p { color: rgba(255,255,255,0.4); font-size: 0.85rem; margin-top: 12px; }
   </style>
 </head>
-
-
 <body>
-  <div id="three-container"></div>
-  <div class="cyber-background"></div>
-  <div class="cyber-particles" id="cyberParticles"></div>
-  <div class="cyber-grid"></div>
+  <canvas id="bgCanvas"></canvas>
+  <div class="cyber-grid-bg"></div>
 
-  <div class="content-wrapper">
-    {% include 'navbar.html' %}
-   
-    <section class="hero">
-      <div class="hero-content">
-        <h1>PoseGuard<span>Driver Safety</span></h1>
-        <p>Advanced AI-powered system for real-time driver monitoring, pose detection, and safety enhancement</p>
-        <a href="#features" class="btn btn-glow">Explore Features</a>
-      </div>
-    </section>
+  {% include 'navbar.html' %}
 
-    <section class="features" id="features">
-      <h2 class="section-title">Key Features</h2>
-      <div class="card-container">
-        <div class="card">
-          <h3>Real-time Pose Detection</h3>
-          <p>Advanced deep learning algorithms continuously monitor and analyze driver posture, detecting unsafe positions and potential risks.</p>
-        </div>
-        <div class="card">
-          <h3>Smart Alert System</h3>
-          <p>Instant notifications for drowsiness, distraction, or unsafe driving patterns with intelligent feedback mechanisms.</p>
-        </div>
-        <div class="card">
-          <h3>Comprehensive Analytics</h3>
-          <p>Detailed insights and reports on driver behavior, safety metrics, and improvement recommendations.</p>
-        </div>
-      </div>
-    </section>
+  <!-- Hero -->
+  <section class="hero">
+    <div>
+      <div class="hero-title">PoseGuard</div>
+      <div class="hero-subtitle">Driver Safety AI — Real-Time Pose Detection</div>
+      <p style="color:#aaa; max-width:600px; margin:0 auto 40px; line-height:1.8;">
+        An advanced AI-powered monitoring system that detects unsafe driver behaviours in real-time using computer vision and deep learning.
+      </p>
+      <a href="#features" class="hero-btn">Explore Features</a>
+    </div>
+  </section>
 
-    <section class="testimonials">
-      <h2 class="section-title">What Users Say</h2>
-      <div class="card-container">
-        <div class="card">
-          <p>"The AI system has revolutionized our fleet safety. Accident rates have dropped by 40% since implementation."</p>
-          <strong>— Logistics Director, SmartTransit</strong>
-        </div>
-        <div class="card">
-          <p>"The real-time monitoring and intelligent feedback have significantly improved our driver performance."</p>
-          <strong>— Operations Head, FleetSecure</strong>
-        </div>
-      </div>
-    </section>
-
-    <section class="contact">
-      <h2 class="section-title">Get In Touch</h2>
-      <div class="contact-form">
-        <form>
-          <div class="row g-3">
-            <div class="col-md-6">
-              <input type="text" class="form-control" placeholder="Your Name">
-            </div>
-            <div class="col-md-6">
-              <input type="email" class="form-control" placeholder="Email Address">
-            </div>
-            <div class="col-12">
-              <textarea class="form-control" rows="4" placeholder="Message"></textarea>
-            </div>
-            <div class="col-12 text-center">
-              <button type="submit" class="btn btn-glow">Send Message</button>
-            </div>
+  <!-- Features -->
+  <section id="features">
+    <div class="container">
+      <div class="section-title">Core Features</div>
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="cyber-card">
+            <div class="icon"><i class="fas fa-eye"></i></div>
+            <h4>Real-time Pose Detection</h4>
+            <p>Continuously monitors driver posture using a trained Keras CNN model, identifying 8 distinct unsafe behaviours including phone use, distraction, and more.</p>
           </div>
-        </form>
-      </div>
-    </section>
-
-    <footer>
-      <div class="container">
-        <p>&copy; Driver Pose Detection AI | Powered by Deep Learning</p>
-        <div class="social-icons">
-          <a href="#"><i class="fab fa-github"></i></a>
-          <a href="#"><i class="fab fa-linkedin"></i></a>
-          <a href="#"><i class="fab fa-twitter"></i></a>
+        </div>
+        <div class="col-md-4">
+          <div class="cyber-card">
+            <div class="icon"><i class="fas fa-bell"></i></div>
+            <h4>Smart Alert System</h4>
+            <p>Instant voice alerts using text-to-speech when unsafe behaviour is detected. Incidents are logged with screenshots and video clips to MongoDB automatically.</p>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="cyber-card">
+            <div class="icon"><i class="fas fa-chart-bar"></i></div>
+            <h4>Comprehensive Analytics</h4>
+            <p>Admin dashboard with full incident reports, screenshot evidence, video records, and structured event logs with confidence scores for each detection.</p>
+          </div>
         </div>
       </div>
-    </footer>
-  </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section id="testimonials">
+    <div class="container">
+      <div class="section-title">What Users Say</div>
+      <div class="row g-4 justify-content-center">
+        <div class="col-md-5">
+          <div class="testimonial-card">
+            <p>"PoseGuard has completely transformed how we monitor our fleet drivers. The AI detection is incredibly accurate and the alerts are fast."</p>
+            <div class="author">— Rajesh Kumar, Fleet Manager</div>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="testimonial-card">
+            <p>"As a logistics company, driver safety is our top priority. PoseGuard's real-time monitoring gives us the peace of mind we need on long hauls."</p>
+            <div class="author">— Priya Sharma, Safety Director</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact">
+    <div class="container">
+      <div class="section-title">Contact Us</div>
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <form class="contact-form">
+            <input type="text" placeholder="Your Name" />
+            <input type="email" placeholder="Your Email" />
+            <textarea rows="5" placeholder="Your Message"></textarea>
+            <button type="submit" class="contact-btn">Send Message</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="social-icons">
+      <a href="#"><i class="fab fa-github"></i></a>
+      <a href="#"><i class="fab fa-linkedin"></i></a>
+      <a href="#"><i class="fab fa-twitter"></i></a>
+    </div>
+    <p>© 2024 PoseGuard — AI Driver Safety System. All rights reserved.</p>
+  </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // Three.js Scene Setup
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    document.getElementById('three-container').appendChild(renderer.domElement);
-
-    // Create floral particles
-    const particles = [];
-    const particleCount = 200;
-    const particleGeometry = new THREE.BufferGeometry();
-    const particleMaterial = new THREE.PointsMaterial({
-      color: 0x00f3ff,
-      size: 0.1,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending
-    });
-
-    for (let i = 0; i < particleCount; i++) {
-      const x = (Math.random() - 0.5) * 10;
-      const y = (Math.random() - 0.5) * 10;
-      const z = (Math.random() - 0.5) * 10;
-      particles.push(x, y, z);
-    }
-
-    particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(particles, 3));
-    const particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-    scene.add(particleSystem);
-
-    // Camera position
-    camera.position.z = 5;
-
-    // Animation
-    function animate() {
-      requestAnimationFrame(animate);
-      
-      particleSystem.rotation.x += 0.001;
-      particleSystem.rotation.y += 0.001;
-      
-      particles.forEach((_, i) => {
-        if (i % 3 === 0) {
-          particleGeometry.attributes.position.array[i] += Math.sin(Date.now() * 0.001 + i) * 0.01;
-        }
-      });
-      
-      particleGeometry.attributes.position.needsUpdate = true;
-      
-      renderer.render(scene, camera);
-    }
-
-    animate();
-
-    // Handle window resize
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
+    // Three.js particle background
+    (function() {
+      const canvas = document.getElementById('bgCanvas');
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
       renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+      renderer.setClearColor(0x000000, 0);
+      renderer.setPixelRatio(window.devicePixelRatio);
 
-    // Initialize Cyber Particles
-    function initCyberParticles() {
-      const cyberParticles = document.getElementById('cyberParticles');
-      
-      // Create particles
-      for (let i = 0; i < 50; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'cyber-particle';
-        particle.style.left = `${Math.random() * 100}%`;
-        particle.style.top = `${Math.random() * 100}%`;
-        particle.style.animationDelay = `${Math.random() * 6}s`;
-        cyberParticles.appendChild(particle);
+      const count = 200;
+      const positions = new Float32Array(count * 3);
+      const velocities = [];
+      for (let i = 0; i < count; i++) {
+        positions[i * 3]     = (Math.random() - 0.5) * 100;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+        velocities.push({ x: (Math.random()-0.5)*0.02, y: (Math.random()-0.5)*0.02, z: (Math.random()-0.5)*0.02 });
       }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const mat = new THREE.PointsMaterial({ size: 0.5, color: 0x00f3ff, transparent: true, opacity: 0.7, blending: THREE.AdditiveBlending });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+      camera.position.z = 50;
 
-      // Create connections
-      for (let i = 0; i < 30; i++) {
-        const connection = document.createElement('div');
-        connection.className = 'cyber-connection';
-        connection.style.left = `${Math.random() * 100}%`;
-        connection.style.top = `${Math.random() * 100}%`;
-        connection.style.width = `${Math.random() * 200 + 100}px`;
-        connection.style.animationDelay = `${Math.random() * 4}s`;
-        cyberParticles.appendChild(connection);
+      function animate() {
+        requestAnimationFrame(animate);
+        const pos = geo.attributes.position.array;
+        for (let i = 0; i < count; i++) {
+          pos[i*3]   += velocities[i].x;
+          pos[i*3+1] += velocities[i].y;
+          pos[i*3+2] += velocities[i].z;
+          if (Math.abs(pos[i*3]) > 50) velocities[i].x *= -1;
+          if (Math.abs(pos[i*3+1]) > 50) velocities[i].y *= -1;
+          if (Math.abs(pos[i*3+2]) > 50) velocities[i].z *= -1;
+        }
+        geo.attributes.position.needsUpdate = true;
+        points.rotation.y += 0.0005;
+        renderer.render(scene, camera);
       }
-    }
+      animate();
 
-    // Add mouse parallax effect
-    function addParallaxEffect() {
-      document.addEventListener('mousemove', (e) => {
-        const mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-        const mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-
-        const cyberParticles = document.getElementById('cyberParticles');
-        const cyberGrid = document.querySelector('.cyber-grid');
-
-        if (cyberParticles) {
-          cyberParticles.style.transform = `translate(${mouseX * 20}px, ${mouseY * 20}px)`;
-        }
-
-        if (cyberGrid) {
-          cyberGrid.style.transform = `perspective(1000px) rotateX(60deg) translateY(${mouseY * 20}px)`;
-        }
-
-        // Update Three.js camera
-        camera.position.x = mouseX * 2;
-        camera.position.y = -mouseY * 2;
-        camera.lookAt(scene.position);
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
       });
-    }
-
-    // Initialize all animations
-    window.addEventListener('load', () => {
-      initCyberParticles();
-      addParallaxEffect();
-    });
+    })();
   </script>
 </body>
-
-
 </html>
-
-

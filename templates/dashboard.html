@@ -1,32 +1,49 @@
 {% extends 'base.html' %}
-
+{% block title %}Dashboard — PoseGuard{% endblock %}
 {% block content %}
-<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-    <div class="dashboard-card col-span-1 md:col-span-2 lg:col-span-2">
-        <h2 class="text-xl font-semibold">🚗 Live Monitoring</h2>
-        <p class="text-gray-400 mt-2 mb-4">Track driver activities in real-time.</p>
-        <div class="w-full overflow-hidden rounded-lg border border-gray-700">
-            <img src="{{ url_for('video_feed') }}" class="w-full" alt="Live Stream">
-        </div>
+<h1 class="section-title">🚗 Live Driver Monitoring</h1>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Live Feed -->
+  <div class="lg:col-span-2">
+    <div class="glass-card">
+      <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:1rem;text-transform:uppercase;margin-bottom:16px;">📷 Live Camera Feed</h3>
+      <img src="{{ url_for('video_feed') }}" class="w-full rounded-lg" style="border:1px solid rgba(0,243,255,0.3);border-radius:10px;" alt="Live Feed" />
+      <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:8px;text-align:center;">Real-time AI pose detection active</p>
     </div>
-
-    <!-- System Status -->
-    <div class="dashboard-card">
-        <h2 class="text-xl font-semibold">🛠 System Status</h2>
-        <p class="text-gray-400 mt-2">Everything is running smoothly.</p>
-        <ul class="mt-4 text-sm text-gray-400 list-disc pl-5">
-            <li>Model Loaded ✅</li>
-            <li>Live Detection Active 🎯</li>
-            <li>Audio/Visual Alerts Working 🔊</li>
-        </ul>
+  </div>
+  <!-- Status Panel -->
+  <div class="flex flex-col gap-6">
+    <div class="glass-card">
+      <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:0.9rem;text-transform:uppercase;margin-bottom:16px;">⚙️ System Status</h3>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;">
+        <li style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,243,255,0.1);">
+          <span style="color:#ccc;font-size:0.9rem;">Model Loaded</span>
+          <span style="color:#00ff88;font-size:1.1rem;">✅</span>
+        </li>
+        <li style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,243,255,0.1);">
+          <span style="color:#ccc;font-size:0.9rem;">Live Detection Active</span>
+          <span style="font-size:1.1rem;">🎯</span>
+        </li>
+        <li style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;">
+          <span style="color:#ccc;font-size:0.9rem;">Audio / Visual Alerts</span>
+          <span style="font-size:1.1rem;">🔊</span>
+        </li>
+      </ul>
     </div>
-
-    <!-- Quick Report Access -->
-    <div class="dashboard-card">
-        <h2 class="text-xl font-semibold">📊 AI Reports</h2>
-        <p class="text-gray-400 mt-2 mb-4">View real-time AI-generated reports.</p>
-        <a href="{{ url_for('reports') }}" class="text-blue-400 underline">View Reports</a>
+    <div class="glass-card">
+      <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:0.9rem;text-transform:uppercase;margin-bottom:14px;">📊 AI Reports</h3>
+      <p style="color:#ccc;font-size:0.9rem;margin-bottom:16px;">View detection logs, screenshots, and incident analysis in the Reports section.</p>
+      {% if session.get('admin') %}
+      <a href="{{ url_for('reports') }}" class="btn-primary" style="display:inline-block;text-decoration:none;font-size:0.8rem;">View Reports</a>
+      {% else %}
+      <a href="{{ url_for('view_records') }}" class="btn-primary" style="display:inline-block;text-decoration:none;font-size:0.8rem;">View Records</a>
+      {% endif %}
     </div>
-</section>
+    <div class="glass-card">
+      <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:0.9rem;text-transform:uppercase;margin-bottom:14px;">📹 Video Analysis</h3>
+      <p style="color:#ccc;font-size:0.9rem;margin-bottom:16px;">Upload a recorded video for offline AI pose analysis.</p>
+      <a href="{{ url_for('video_upload') }}" class="btn-primary" style="display:inline-block;text-decoration:none;font-size:0.8rem;">Upload Video</a>
+    </div>
+  </div>
+</div>
 {% endblock %}

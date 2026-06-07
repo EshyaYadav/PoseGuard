@@ -1,55 +1,50 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
+{% block title %}Reports — PoseGuard{% endblock %}
 {% block content %}
-<!-- Floating Shapes -->
-<div class="floating-shape"></div>
-<div class="floating-shape"></div>
-<div class="floating-shape"></div>
+<h1 class="section-title">📊 AI Alert Reports</h1>
 
-<div class="container px-6 py-10">
-    <h1 class="section-title" id="reportTitle">AI Alert Reports</h1>
-
-    {% if alerts %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-        {% for alert in alerts %}
-        <div class="glass-card report-card opacity-0 transform scale-90">
-            <h2 class="text-xl neon-text mb-2">🚨 {{ alert.alert_type }}</h2>
-            <p class="neon-paragraph">Detected for: <span class="font-semibold text-white">{{ alert.user_email }}</span></p>
-            <p class="text-sm text-gray-400 mt-1">At: {{ alert.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</p>
-        </div>
-        {% endfor %}
+<div class="mb-12">
+  <h2 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:1rem;text-transform:uppercase;margin-bottom:20px;">🔔 Detection Alerts</h2>
+  {% if alerts %}
+  <div class="scrollable-section">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="alert-cards">
+      {% for alert in alerts %}
+      <div class="glass-card alert-card" style="padding:18px;">
+        <div style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:0.8rem;text-transform:uppercase;margin-bottom:8px;">{{ alert.alert_type }}</div>
+        <div style="color:#ccc;font-size:0.85rem;margin-bottom:4px;">👤 {{ alert.user_email }}</div>
+        <div style="color:rgba(255,255,255,0.4);font-size:0.78rem;">🕐 {{ alert.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+      </div>
+      {% endfor %}
     </div>
-    {% else %}
-    <p class="text-center text-lg neon-paragraph mt-6">No alerts have been recorded yet. Monitoring is active...</p>
-    {% endif %}
-
-    <h2 class="section-title mt-16 mb-6">Screenshots</h2>
-    {% if screenshots %}
-    <div class="scrollable-section grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for screenshot in screenshots %}
-        <div class="glass-card">
-            <img src="{{ url_for('get_media', filename=screenshot.image_path) }}" 
-                 class="w-full h-48 object-cover rounded mb-4 shadow-lg border border-blue-500">
-            <p class="neon-paragraph"><strong>Email:</strong> {{ screenshot.user_email }}</p>
-            <p class="neon-paragraph"><strong>Type:</strong> {{ screenshot.alert_type }}</p>
-            <p class="text-sm text-gray-400"><strong>Time:</strong> {{ screenshot.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</p>
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <p class="text-center text-lg neon-paragraph mt-6">No screenshots have been recorded yet.</p>
-    {% endif %}
+  </div>
+  {% else %}
+  <div class="glass-card" style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">No alerts recorded yet.</div>
+  {% endif %}
 </div>
 
-<!-- Optional floating stickers (star.png or any sticker) -->
-<div class="sticker"></div>
-<div class="sticker"></div>
-
-<!-- Animation Script -->
+<div>
+  <h2 style="font-family:'Orbitron',sans-serif;color:#ff00ff;font-size:1rem;text-transform:uppercase;margin-bottom:20px;">📸 Screenshot Evidence</h2>
+  {% if screenshots %}
+  <div class="scrollable-section">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="screenshot-cards">
+      {% for screenshot in screenshots %}
+      <div class="glass-card screenshot-card" style="padding:14px;">
+        <img src="{{ url_for('get_media', filename=screenshot.image_path) }}" style="width:100%;border-radius:8px;margin-bottom:10px;border:1px solid rgba(0,243,255,0.2);" alt="Incident Screenshot" onerror="this.style.display='none'" />
+        <div style="color:#ccc;font-size:0.8rem;margin-bottom:4px;">👤 {{ screenshot.user_email }}</div>
+        <div style="font-family:'Orbitron',sans-serif;color:#ff00ff;font-size:0.75rem;margin-bottom:4px;">{{ screenshot.alert_type }}</div>
+        <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;">🕐 {{ screenshot.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% else %}
+  <div class="glass-card" style="text-align:center;padding:40px;color:rgba(255,255,255,0.4);">No screenshots captured yet.</div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        gsap.from("#reportTitle", { duration: 1, opacity: 0, y: -50, ease: "power3.out" });
-        gsap.to(".report-card", { duration: 1, opacity: 1, scale: 1, stagger: 0.3, ease: "power3.out" });
-    });
+  gsap.from('.alert-card', { opacity: 0, y: 30, duration: 0.6, stagger: 0.08, ease: 'power2.out' });
+  gsap.from('.screenshot-card', { opacity: 0, y: 30, duration: 0.6, stagger: 0.08, delay: 0.3, ease: 'power2.out' });
 </script>
 {% endblock %}

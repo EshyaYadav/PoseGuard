@@ -1,11 +1,13 @@
 .env
 __pycache__/
 *.pyc
+*.pyo
+poseguard.db
 test.db
 instance/
 static/processed/*
 !static/processed/.gitkeep
 .vercel
-node_modules
-dist
-build
+node_modules/
+venv/
+*.h5

@@ -1,79 +1,51 @@
 {% extends 'base.html' %}
-
+{% block title %}About — PoseGuard{% endblock %}
 {% block content %}
-<section class="text-center py-12">
-    <h1 class="text-4xl font-bold neon-text mb-6">👥 Meet Our Team</h1>
-    <p class="text-gray-400 neon-paragraph mb-8">
-        The people behind PoseGuard – dedicated to AI-driven safety.
-    </p>
+<h1 class="section-title">👥 Meet the Team</h1>
 
-    <!-- Project Description -->
-    <div class="max-w-3xl mx-auto mb-10">
-        <p class="text-gray-300">
-            PoseGuard is an AI-powered Driver Unwanted Pose Detection System 
-            designed to enhance road safety by detecting driver distractions 
-            in real-time and sending alerts.
-        </p>
-    </div>
-
-    <!-- Scrollable Team Section -->
-    <div class="overflow-x-auto whitespace-nowrap scrollbar-hide flex justify-center space-x-6 px-6" id="teamScroll">
-
-        <!-- Antra -->
-        <div class="team-card neon-box hover:scale-105 transition duration-300">
-            <img src="/static/images/antra.jpeg" class="rounded-xl h-40 w-40 object-cover mx-auto">
-            <h3 class="mt-4 text-xl font-semibold neon-text">Antra Singh</h3>
-            <p class="text-gray-400">Project Manager</p>
-        </div>
-
-        <!-- Eshya -->
-        <div class="team-card neon-box hover:scale-105 transition duration-300">
-            <img src="/static/images/eshya.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
-            <h3 class="mt-4 text-xl font-semibold neon-text">Eshya Yadav</h3>
-            <p class="text-gray-400">Frontend Developer</p>
-        </div>
-
-        <!-- Ujjawal -->
-        <div class="team-card neon-box hover:scale-105 transition duration-300">
-            <img src="/static/images/ujjawal.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
-            <h3 class="mt-4 text-xl font-semibold neon-text">Ujjwal Kanojiya</h3>
-            <p class="text-gray-400">Database & Development</p>
-        </div>
-
-        <!-- Sumati -->
-        <div class="team-card neon-box hover:scale-105 transition duration-300">
-            <img src="/static/images/sumati.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
-            <h3 class="mt-4 text-xl font-semibold neon-text">Sumati Gaur</h3>
-            <p class="text-gray-400">AI Engineer</p>
-        </div>
-
-        <!-- Amit -->
-        <div class="team-card neon-box hover:scale-105 transition duration-300">
-            <img src="/static/images/amit.jpg" class="rounded-xl h-40 w-40 object-cover mx-auto">
-            <h3 class="mt-4 text-xl font-semibold neon-text">Amit Singh</h3>
-            <p class="text-gray-400">UI/UX Designer</p>
-        </div>
-
-    </div>
-</section>
-
-<!-- Smooth Auto Scroll Script -->
+<div id="teamScroll">
+  <div class="team-card">
+    <img src="/static/images/antra.jpeg" alt="Antra Singh" onerror="this.src='https://via.placeholder.com/180/0a0a15/00f3ff?text=AS'" />
+    <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;margin-top:16px;font-size:1rem;">Antra Singh</h3>
+    <p style="color:#ff00ff;font-size:0.85rem;margin:6px 0 10px;text-transform:uppercase;letter-spacing:1px;">Project Manager</p>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;">Leads the project vision, coordinates team efforts, and ensures delivery milestones are met.</p>
+  </div>
+  <div class="team-card">
+    <img src="/static/images/eshya.jpg" alt="Eshya Yadav" onerror="this.src='https://via.placeholder.com/180/0a0a15/00f3ff?text=EY'" />
+    <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;margin-top:16px;font-size:1rem;">Eshya Yadav</h3>
+    <p style="color:#ff00ff;font-size:0.85rem;margin:6px 0 10px;text-transform:uppercase;letter-spacing:1px;">Frontend Developer</p>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;">Designs and builds the cyberpunk UI, ensuring an immersive and responsive experience.</p>
+  </div>
+  <div class="team-card">
+    <img src="/static/images/ujjawal.jpg" alt="Ujjwal Kanojiya" onerror="this.src='https://via.placeholder.com/180/0a0a15/00f3ff?text=UK'" />
+    <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;margin-top:16px;font-size:1rem;">Ujjwal Kanojiya</h3>
+    <p style="color:#ff00ff;font-size:0.85rem;margin:6px 0 10px;text-transform:uppercase;letter-spacing:1px;">Database & Development</p>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;">Manages MongoDB, SQLite schemas, and backend data pipelines for incident storage.</p>
+  </div>
+  <div class="team-card">
+    <img src="/static/images/sumati.jpg" alt="Sumati Gaur" onerror="this.src='https://via.placeholder.com/180/0a0a15/00f3ff?text=SG'" />
+    <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;margin-top:16px;font-size:1rem;">Sumati Gaur</h3>
+    <p style="color:#ff00ff;font-size:0.85rem;margin:6px 0 10px;text-transform:uppercase;letter-spacing:1px;">AI Engineer</p>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;">Trains and optimises the Keras CNN model for accurate real-time pose classification.</p>
+  </div>
+  <div class="team-card">
+    <img src="/static/images/amit.jpg" alt="Amit Singh" onerror="this.src='https://via.placeholder.com/180/0a0a15/00f3ff?text=AS'" />
+    <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;margin-top:16px;font-size:1rem;">Amit Singh</h3>
+    <p style="color:#ff00ff;font-size:0.85rem;margin:6px 0 10px;text-transform:uppercase;letter-spacing:1px;">UI/UX Designer</p>
+    <p style="color:rgba(255,255,255,0.6);font-size:0.85rem;">Crafts wireframes, user flows, and visual language for the PoseGuard interface.</p>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
 <script>
-    const scrollContainer = document.getElementById('teamScroll');
-
-    let scrollAmount = 0;
-
-    setInterval(() => {
-        scrollAmount += 220;
-        scrollContainer.scrollTo({
-            left: scrollAmount,
-            behavior: 'smooth'
-        });
-
-        if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
-            scrollAmount = 0;
-        }
+  (function() {
+    const scroll = document.getElementById('teamScroll');
+    let offset = 0;
+    setInterval(function() {
+      offset += 220;
+      if (offset >= scroll.scrollWidth - scroll.clientWidth) offset = 0;
+      scroll.scrollTo({ left: offset, behavior: 'smooth' });
     }, 3000);
+  })();
 </script>
-
 {% endblock %}

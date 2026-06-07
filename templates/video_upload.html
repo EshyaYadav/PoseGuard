@@ -1,33 +1,27 @@
 {% extends 'base.html' %}
-
+{% block title %}Video Analysis — PoseGuard{% endblock %}
 {% block content %}
-<section class="container mx-auto px-4 py-8">
-    <div class="glass-card max-w-2xl mx-auto">
-        <h2 class="text-3xl font-bold text-center mb-8 neon-text">Video Analysis</h2>
+<h1 class="section-title">📹 Video Analysis</h1>
+<div class="flex justify-center">
+  <div class="glass-card w-full max-w-2xl">
+    <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:1rem;text-transform:uppercase;margin-bottom:20px;">Upload Video for AI Analysis</h3>
+    <form action="{{ url_for('video_upload') }}" method="POST" enctype="multipart/form-data">
+      <div style="border:2px dashed rgba(0,243,255,0.4);border-radius:12px;padding:40px;text-align:center;margin-bottom:20px;transition:border-color 0.3s;" onmouseover="this.style.borderColor='#00f3ff'" onmouseout="this.style.borderColor='rgba(0,243,255,0.4)'">
+        <div style="font-size:3rem;margin-bottom:12px;">🎬</div>
+        <p style="color:#aaa;margin-bottom:16px;">Drag & drop or click to select a video file</p>
+        <input type="file" name="video" accept="video/*" required style="color:#00f3ff;font-family:'Rajdhani',sans-serif;" />
+        <p style="color:rgba(255,255,255,0.3);font-size:0.78rem;margin-top:10px;">Supported: MP4, AVI, MOV, WMV — Max 16MB</p>
+      </div>
+      <button type="submit" class="btn-primary" style="width:100%;">Analyze Video</button>
+    </form>
 
-        <!-- Upload Form -->
-        <form action="{{ url_for('process_video') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-            <div class="flex flex-col space-y-2">
-                <label for="video" class="text-lg text-gray-300">Select Video File</label>
-                <input type="file" name="video" accept="video/*" required
-                    class="p-2 bg-gray-800 border border-gray-600 rounded-lg text-gray-300">
-            </div>
-            <button type="submit" class="btn-primary w-full">
-                Analyze Video
-            </button>
-        </form>
-
-        {% if filename %}
-        <div class="mt-8">
-            <h3 class="text-xl font-semibold mb-4 neon-text">Live Analysis</h3>
-            <div class="border border-gray-700 rounded-lg p-4">
-                <img src="{{ url_for('video_feed_with_filename', filename=filename) }}" class="w-full rounded-lg">
-            </div>
-            <div class="mt-4 text-center text-gray-300">
-                <p>Analyzing video in real-time. Unwanted poses will be highlighted in red.</p>
-            </div>
-        </div>
-        {% endif %}
+    {% if filename %}
+    <div style="margin-top:30px;border:1px solid rgba(0,243,255,0.3);border-radius:12px;padding:16px;">
+      <h4 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:0.85rem;text-transform:uppercase;margin-bottom:12px;">🔍 Analysis Result — {{ filename }}</h4>
+      <img src="{{ url_for('video_feed_with_filename', filename=filename) }}" class="w-full rounded-lg" style="border-radius:10px;" alt="Video Analysis Feed" />
+      <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:8px;text-align:center;">Real-time pose detection on uploaded video</p>
     </div>
-</section>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

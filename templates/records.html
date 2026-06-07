@@ -1,113 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PoseGuard - Incident Records</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Incident Records — PoseGuard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
       --neon-cyan: #00f3ff;
       --neon-magenta: #ff00ff;
-      --dark-bg: #0a0a15;
-      --card-bg: rgba(10, 10, 21, 0.8);
-      --text-glow: 0 0 10px rgba(0, 243, 255, 0.5);
+      --bg-dark: #0a0a15;
+      --card-bg: rgba(10, 10, 21, 0.85);
     }
-    body {
-      font-family: 'Rajdhani', sans-serif;
-      background: var(--dark-bg);
-      color: #ffffff;
-      padding-top: 80px;
+    body { font-family: 'Rajdhani', sans-serif; background-color: var(--bg-dark); color: #fff; }
+    .cyber-grid-bg {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+      background-image:
+        linear-gradient(rgba(0,243,255,0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,243,255,0.06) 1px, transparent 1px);
+      background-size: 50px 50px;
     }
-    .cyber-background {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%; z-index: -2;
-      background: radial-gradient(circle at 50% 50%, rgba(0, 102, 255, 0.1) 0%, transparent 60%);
-    }
-    .section-title {
+    .page-title {
       font-family: 'Orbitron', sans-serif;
-      font-size: 2.5rem;
-      text-align: center;
-      margin-bottom: 2rem;
+      font-size: 2rem;
       color: var(--neon-cyan);
-      text-shadow: var(--text-glow);
+      text-transform: uppercase;
+      text-align: center;
+      text-shadow: 0 0 15px var(--neon-cyan);
+      margin: 40px 0 30px;
     }
-    .card {
+    .record-card {
       background: var(--card-bg);
-      border: 1px solid rgba(0, 243, 255, 0.2);
-      backdrop-filter: blur(10px);
+      border: 1px solid var(--neon-cyan);
       border-radius: 15px;
-      color: #fff;
-      transition: all 0.3s ease;
-      margin-bottom: 2rem;
+      padding: 20px;
+      box-shadow: 0 0 15px rgba(0,243,255,0.15), 0 0 30px rgba(255,0,255,0.1);
+      transition: transform 0.3s;
+      height: 100%;
     }
-    .card:hover {
-      box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-      border-color: var(--neon-cyan);
-    }
-    .status-badge {
-      font-family: 'Orbitron', sans-serif;
-      background: rgba(255, 0, 0, 0.2);
-      color: #ff4d4d;
-      border: 1px solid #ff4d4d;
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.9rem;
-    }
-    .status-safe {
-      background: rgba(0, 255, 157, 0.2);
-      color: var(--neon-green, #00ff9d);
-      border-color: var(--neon-green, #00ff9d);
-    }
+    .record-card:hover { transform: translateY(-4px); }
+    .record-event { font-family: 'Orbitron', sans-serif; color: var(--neon-cyan); font-weight: 700; font-size: 0.85rem; text-transform: uppercase; }
+    .badge-safe { background: rgba(0,255,100,0.2); color: #00ff64; border: 1px solid #00ff64; border-radius: 20px; padding: 2px 12px; font-size: 0.78rem; font-family: 'Orbitron', sans-serif; }
+    .badge-unsafe { background: rgba(255,60,60,0.2); color: #ff4444; border: 1px solid #ff4444; border-radius: 20px; padding: 2px 12px; font-size: 0.78rem; font-family: 'Orbitron', sans-serif; }
+    .meta-item { color: rgba(255,255,255,0.6); font-size: 0.85rem; margin-top: 6px; }
+    .no-video { background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15); border-radius: 8px; padding: 20px; text-align: center; color: rgba(255,255,255,0.3); font-size: 0.85rem; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <div class="cyber-background"></div>
+  <div class="cyber-grid-bg"></div>
   {% include 'navbar.html' %}
 
-  <div class="container pb-5">
-    <h2 class="section-title">Incident Event Records</h2>
-    <div class="row">
+  <div class="container py-5">
+    <h1 class="page-title">📁 Incident Event Records</h1>
+
+    {% if records %}
+    <div class="row g-4">
       {% for record in records %}
       <div class="col-md-6 col-lg-4">
-        <div class="card h-100 p-3">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="m-0 text-info fw-bold">{{ record.event }}</h5>
-            <span class="status-badge {% if record.status|lower == 'safe' %}status-safe{% endif %}">
-              {{ record.status }}
-            </span>
+        <div class="record-card">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="record-event">{{ record.event or 'Unknown Event' }}</div>
+            {% if record.status|lower == 'safe' %}
+            <span class="badge-safe">Safe</span>
+            {% else %}
+            <span class="badge-unsafe">{{ record.status or 'Unsafe' }}</span>
+            {% endif %}
           </div>
-          
-          <ul class="list-unstyled mb-3 text-light opacity-75">
-            <li><i class="fas fa-clock me-2"></i> {{ record.time }}</li>
-            <li><i class="fas fa-bullseye me-2"></i> Accuracy: {{ (record.confidence * 100)|round(1) }}%</li>
-          </ul>
-
+          <div class="meta-item"><i class="fas fa-clock me-1" style="color:#00f3ff;"></i> {{ record.timestamp or 'N/A' }}</div>
+          <div class="meta-item"><i class="fas fa-crosshairs me-1" style="color:#ff00ff;"></i> Confidence: {{ "%.1f"|format((record.confidence or 0)|float) }}%</div>
           {% if record.video_file %}
-          <div class="mt-auto">
-            <p class="mb-2 text-warning small"><i class="fas fa-video me-1"></i> Incident Dashcam Feed:</p>
-            <video class="w-100 rounded border border-secondary" controls preload="metadata">
-              <source src="{{ url_for('get_media', filename=record.video_file) }}" type="video/mp4">
+          <div style="margin-top:12px;">
+            <video controls class="w-100 rounded" style="border:1px solid rgba(0,243,255,0.2);border-radius:8px;">
+              <source src="{{ url_for('get_media', filename=record.video_file) }}" type="video/mp4" />
               Your browser does not support the video tag.
             </video>
           </div>
           {% else %}
-          <div class="mt-auto p-3 bg-dark rounded text-center opacity-50 border border-secondary">
-            <i class="fas fa-video-slash fs-3 mb-2"></i>
-            <p class="mb-0 small">No Video File Captured</p>
-          </div>
+          <div class="no-video"><i class="fas fa-video-slash me-2"></i>No Video File Captured</div>
           {% endif %}
         </div>
       </div>
-      {% else %}
-      <div class="col-12 text-center text-secondary py-5">
-        <i class="fas fa-database fs-1 mb-3 opacity-50"></i>
-        <h4>No incident records found in MongoDB.</h4>
-      </div>
       {% endfor %}
     </div>
+    {% else %}
+    <div class="text-center py-5" style="color:rgba(255,255,255,0.4);">
+      <div style="font-size:4rem;margin-bottom:16px;">📭</div>
+      <p style="font-family:'Orbitron',sans-serif;font-size:0.9rem;">No incident records found.</p>
+    </div>
+    {% endif %}
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
