@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, redirect, url_for, session, Response, abort
+from flask import Flask, render_template, request, redirect, url_for, session, Response, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
-import bcrypt, cv2, os, tempfile, time
+import bcrypt, cv2, os, tempfile, time, logging
+import numpy as np
 from datetime import datetime
 from collections import deque
 from threading import Thread, Event
@@ -8,9 +9,15 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 import gridfs
 from werkzeug.utils import secure_filename
-from pose_detection import detect_pose
+from pose_detection import detect_pose, preload_model, ensure_model_loaded, get_model_status
 
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(name)s] %(levelname)s: %(message)s',
+)
+logger = logging.getLogger('poseguard')
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'changeme-poseguard-secret')
@@ -78,8 +85,19 @@ class IncidentVideo(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 
+class ContactInquiry(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), nullable=False)
+    work_email = db.Column(db.String(120), nullable=False)
+    company = db.Column(db.String(200), nullable=False)
+    message = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 with app.app_context():
     db.create_all()
+
+preload_model()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -111,6 +129,71 @@ def map_status(class_name):
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def _encode_status_frame(title, subtitle='', progress=0):
+    """Render a placeholder JPEG frame while the model loads."""
+    frame = np.zeros((480, 640, 3), dtype=np.uint8)
+    frame[:] = (15, 15, 30)
+    cv2.rectangle(frame, (40, 40), (600, 440), (0, 243, 255), 2)
+    cv2.putText(frame, title, (60, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (0, 243, 255), 2)
+    if subtitle:
+        for i, line in enumerate(_wrap_text(subtitle, 52)):
+            cv2.putText(frame, line, (60, 170 + i * 32),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
+    if progress > 0:
+        bar_x, bar_y, bar_w, bar_h = 60, 360, 520, 22
+        cv2.rectangle(frame, (bar_x, bar_y), (bar_x + bar_w, bar_y + bar_h), (60, 60, 80), -1)
+        fill_w = int(bar_w * min(progress, 100) / 100)
+        cv2.rectangle(frame, (bar_x, bar_y), (bar_x + fill_w, bar_y + bar_h), (0, 200, 120), -1)
+        cv2.putText(frame, f'{progress}%', (bar_x + bar_w // 2 - 30, bar_y + 17),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
+    ret, buffer = cv2.imencode('.jpg', frame)
+    if ret:
+        return (b'--frame\r\nContent-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+    return None
+
+
+def _wrap_text(text, width):
+    words = text.split()
+    lines, current = [], []
+    for word in words:
+        candidate = ' '.join(current + [word])
+        if len(candidate) <= width:
+            current.append(word)
+        else:
+            if current:
+                lines.append(' '.join(current))
+            current = [word]
+    if current:
+        lines.append(' '.join(current))
+    return lines[:4]
+
+
+def _wait_for_model_frames():
+    """Yield loading/status frames until the model is ready or fails."""
+    preload_model()
+    while True:
+        status = get_model_status()
+        if status['state'] == 'ready':
+            return
+        if status['state'] == 'error':
+            frame = _encode_status_frame(
+                'Model Load Failed',
+                status.get('error') or status['message'],
+            )
+            if frame:
+                yield frame
+            time.sleep(2)
+            return
+        frame = _encode_status_frame(
+            'Loading AI Model…',
+            status['message'],
+            status.get('progress', 0),
+        )
+        if frame:
+            yield frame
+        time.sleep(0.4)
 
 
 def play_alert_sound(class_name):
@@ -255,15 +338,25 @@ def _process_frame_loop(cap, user_email):
 
 
 def gen_frames(user_email):
+    yield from _wait_for_model_frames()
     cam = get_camera()
     if not cam.isOpened():
+        frame = _encode_status_frame('Camera Unavailable', 'No webcam detected.')
+        if frame:
+            yield frame
         return
     yield from _process_frame_loop(cam, user_email)
 
 
 def gen_frames_for_file(filepath, user_email):
+    yield from _wait_for_model_frames()
+    if get_model_status()['state'] != 'ready':
+        return
     cap = cv2.VideoCapture(filepath)
     if not cap.isOpened():
+        frame = _encode_status_frame('Video Error', f'Could not open: {os.path.basename(filepath)}')
+        if frame:
+            yield frame
         return
     try:
         yield from _process_frame_loop(cap, user_email)
@@ -353,13 +446,36 @@ def video_upload():
     if 'user' not in session:
         return redirect(url_for('login'))
     filename = None
+    error = None
     if request.method == 'POST':
         file = request.files.get('video')
         if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            save_path = os.path.join(tempfile.gettempdir(), filename)
-            file.save(save_path)
-    return render_template('video_upload.html', filename=filename)
+            if not ensure_model_loaded(timeout=120):
+                status = get_model_status()
+                error = status.get('error') or status['message']
+            else:
+                filename = secure_filename(file.filename)
+                save_path = os.path.join(tempfile.gettempdir(), filename)
+                file.save(save_path)
+        else:
+            error = 'Please upload a valid video file (MP4, AVI, MOV, or WMV).'
+    model_status = get_model_status()
+    return render_template(
+        'video_upload.html',
+        filename=filename,
+        error=error,
+        model_ready=model_status['state'] == 'ready',
+    )
+
+
+@app.route('/api/model/status')
+def model_status_api():
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+    status = get_model_status()
+    if status['state'] not in ('ready', 'loading'):
+        preload_model()
+    return jsonify(status)
 
 
 @app.route('/reports')
@@ -379,9 +495,40 @@ def admin_portal():
     return render_template('admin_portal.html', shots=shots)
 
 
-@app.route('/about')
-def about():
-    return render_template('about.html')
+@app.route('/get-in-touch', methods=['POST'])
+def get_in_touch():
+    name = request.form.get('name', '').strip()
+    work_email = request.form.get('work_email', '').strip()
+    company = request.form.get('company', '').strip()
+    message = request.form.get('message', '').strip()
+
+    if not all([name, work_email, company, message]):
+        return redirect(url_for('index', contact_error=1) + '#get-in-touch')
+
+    try:
+        inquiry = ContactInquiry(
+            name=name,
+            work_email=work_email,
+            company=company,
+            message=message,
+        )
+        db.session.add(inquiry)
+        db.session.commit()
+        if mongo_db is not None:
+            mongo_db.contact_inquiries.insert_one({
+                'name': name,
+                'work_email': work_email,
+                'company': company,
+                'message': message,
+                'timestamp': datetime.utcnow().isoformat(),
+            })
+        logger.info('[PoseGuard] Contact inquiry from %s (%s)', name, work_email)
+    except Exception as e:
+        logger.error('[PoseGuard] Failed to save contact inquiry: %s', e)
+        db.session.rollback()
+        return redirect(url_for('index', contact_error=1) + '#get-in-touch')
+
+    return redirect(url_for('index', contact_sent=1) + '#get-in-touch')
 
 
 @app.route('/records')

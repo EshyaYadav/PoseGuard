@@ -11,7 +11,3 @@ static/processed/*
 node_modules/
 venv/
 *.h5
-
-.vercel
-.env*
-.env.example  

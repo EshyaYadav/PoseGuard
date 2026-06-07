@@ -5,23 +5,114 @@
 <div class="flex justify-center">
   <div class="glass-card w-full max-w-2xl">
     <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:1rem;text-transform:uppercase;margin-bottom:20px;">Upload Video for AI Analysis</h3>
-    <form action="{{ url_for('video_upload') }}" method="POST" enctype="multipart/form-data">
+
+    {% if error %}
+    <div style="background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.5);border-radius:8px;padding:14px 18px;margin-bottom:20px;color:#ff8888;font-size:0.95rem;">
+      {{ error }}
+    </div>
+    {% endif %}
+
+    <div id="model-status-panel" style="margin-bottom:20px;{% if model_ready %}display:none;{% endif %}">
+      <p style="color:#ccc;font-size:0.9rem;margin-bottom:10px;" id="model-status-text">Preparing AI model…</p>
+      <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:14px;overflow:hidden;">
+        <div id="model-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#00f3ff,#00ff88);transition:width 0.35s ease;"></div>
+      </div>
+    </div>
+
+    <form action="{{ url_for('video_upload') }}" method="POST" enctype="multipart/form-data" id="upload-form">
       <div style="border:2px dashed rgba(0,243,255,0.4);border-radius:12px;padding:40px;text-align:center;margin-bottom:20px;transition:border-color 0.3s;" onmouseover="this.style.borderColor='#00f3ff'" onmouseout="this.style.borderColor='rgba(0,243,255,0.4)'">
         <div style="font-size:3rem;margin-bottom:12px;">🎬</div>
         <p style="color:#aaa;margin-bottom:16px;">Drag & drop or click to select a video file</p>
         <input type="file" name="video" accept="video/*" required style="color:#00f3ff;font-family:'Rajdhani',sans-serif;" />
         <p style="color:rgba(255,255,255,0.3);font-size:0.78rem;margin-top:10px;">Supported: MP4, AVI, MOV, WMV — Max 16MB</p>
       </div>
-      <button type="submit" class="btn-primary" style="width:100%;">Analyze Video</button>
+      <button type="submit" class="btn-primary" id="analyze-btn" style="width:100%;" {% if not model_ready %}disabled{% endif %}>Analyze Video</button>
     </form>
 
     {% if filename %}
-    <div style="margin-top:30px;border:1px solid rgba(0,243,255,0.3);border-radius:12px;padding:16px;">
+    <div id="analysis-result" style="margin-top:30px;border:1px solid rgba(0,243,255,0.3);border-radius:12px;padding:16px;">
       <h4 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:0.85rem;text-transform:uppercase;margin-bottom:12px;">🔍 Analysis Result — {{ filename }}</h4>
-      <img src="{{ url_for('video_feed_with_filename', filename=filename) }}" class="w-full rounded-lg" style="border-radius:10px;" alt="Video Analysis Feed" />
+      <div id="analysis-loading" style="text-align:center;padding:30px 0;">
+        <p style="color:#aaa;margin-bottom:12px;">Loading model and starting analysis…</p>
+        <div style="background:rgba(255,255,255,0.08);border-radius:8px;height:12px;max-width:400px;margin:0 auto;overflow:hidden;">
+          <div id="analysis-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#00f3ff,#ff00ff);transition:width 0.35s ease;"></div>
+        </div>
+        <p id="analysis-status-text" style="color:rgba(255,255,255,0.45);font-size:0.8rem;margin-top:10px;">Initializing…</p>
+      </div>
+      <img id="analysis-feed" src="" class="w-full rounded-lg" style="border-radius:10px;display:none;" alt="Video Analysis Feed" />
       <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:8px;text-align:center;">Real-time pose detection on uploaded video</p>
     </div>
     {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const modelReady = {{ 'true' if model_ready else 'false' }};
+  const progressBar = document.getElementById('model-progress-bar');
+  const statusText = document.getElementById('model-status-text');
+  const analyzeBtn = document.getElementById('analyze-btn');
+  const statusPanel = document.getElementById('model-status-panel');
+
+  function pollModelStatus(onReady, opts) {
+    opts = opts || {};
+    fetch('{{ url_for("model_status_api") }}')
+      .then(r => r.json())
+      .then(data => {
+        const pct = (data.progress || 0) + '%';
+        if (progressBar && !opts.skipPageBar) progressBar.style.width = pct;
+        if (statusText && !opts.skipPageBar) statusText.textContent = data.message || 'Loading…';
+        if (opts.progressEl) opts.progressEl.style.width = pct;
+        if (opts.textEl) opts.textEl.textContent = data.message || 'Loading…';
+
+        if (data.state === 'ready') {
+          if (statusPanel) statusPanel.style.display = 'none';
+          if (analyzeBtn) analyzeBtn.disabled = false;
+          if (onReady) onReady();
+          return;
+        }
+        if (data.state === 'error') {
+          const err = data.error || data.message;
+          if (statusText && !opts.skipPageBar) statusText.textContent = err;
+          if (opts.textEl) opts.textEl.textContent = err;
+          if (progressBar && !opts.skipPageBar) progressBar.style.background = '#ff5555';
+          if (opts.progressEl) opts.progressEl.style.background = '#ff5555';
+          return;
+        }
+        setTimeout(() => pollModelStatus(onReady, opts), 500);
+      })
+      .catch(() => setTimeout(() => pollModelStatus(onReady, opts), 1000));
+  }
+
+  if (!modelReady) {
+    pollModelStatus();
+  }
+
+  {% if filename %}
+  const feedUrl = '{{ url_for("video_feed_with_filename", filename=filename) }}';
+  const analysisBar = document.getElementById('analysis-progress-bar');
+  const analysisText = document.getElementById('analysis-status-text');
+  const analysisLoading = document.getElementById('analysis-loading');
+  const analysisFeed = document.getElementById('analysis-feed');
+
+  function startAnalysis() {
+    pollModelStatus(() => {
+      if (analysisBar) analysisBar.style.width = '100%';
+      if (analysisText) analysisText.textContent = 'Starting video analysis…';
+      setTimeout(() => {
+        if (analysisLoading) analysisLoading.style.display = 'none';
+        if (analysisFeed) {
+          analysisFeed.style.display = 'block';
+          analysisFeed.src = feedUrl;
+        }
+      }, 400);
+    }, { progressEl: analysisBar, textEl: analysisText, skipPageBar: true });
+  }
+
+  startAnalysis();
+  {% endif %}
+})();
+</script>
 {% endblock %}

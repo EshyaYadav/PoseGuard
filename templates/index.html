@@ -133,8 +133,15 @@
     .testimonial-card:hover { transform: translateY(-4px); }
     .testimonial-card p { font-size: 1.05rem; color: #ddd; line-height: 1.8; font-style: italic; }
     .testimonial-card .author { color: var(--neon-magenta); font-family: 'Orbitron', sans-serif; font-size: 0.8rem; margin-top: 16px; }
-    /* Contact */
-    .contact-form input, .contact-form textarea {
+    /* Get In Touch */
+    .touch-form label {
+      display: block;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+    .touch-form input, .touch-form textarea {
       width: 100%;
       background: rgba(255,255,255,0.06);
       border: 1px solid var(--neon-cyan);
@@ -142,13 +149,16 @@
       padding: 12px 16px;
       color: #fff;
       font-family: 'Rajdhani', sans-serif;
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       outline: none;
-      transition: box-shadow 0.3s;
+      transition: box-shadow 0.3s, border-color 0.3s;
     }
-    .contact-form input:focus, .contact-form textarea:focus { box-shadow: 0 0 10px var(--neon-cyan); }
-    .contact-form input::placeholder, .contact-form textarea::placeholder { color: rgba(255,255,255,0.3); }
-    .contact-btn {
+    .touch-form input:focus, .touch-form textarea:focus {
+      box-shadow: 0 0 10px var(--neon-cyan);
+      border-color: var(--neon-magenta);
+    }
+    .touch-form input::placeholder, .touch-form textarea::placeholder { color: rgba(255,255,255,0.3); }
+    .touch-btn {
       padding: 13px 40px;
       background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
       color: var(--bg-dark);
@@ -161,8 +171,17 @@
       letter-spacing: 1.5px;
       box-shadow: 0 0 20px rgba(0,243,255,0.4);
       transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
     }
-    .contact-btn:hover { transform: scale(1.04); box-shadow: 0 0 30px var(--neon-cyan); }
+    .touch-btn:hover { transform: scale(1.02); box-shadow: 0 0 30px var(--neon-cyan); }
+    .form-alert {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      font-size: 0.95rem;
+    }
+    .form-alert.success { background: rgba(0,255,136,0.12); border: 1px solid rgba(0,255,136,0.4); color: #00ff88; }
+    .form-alert.error { background: rgba(255,80,80,0.12); border: 1px solid rgba(255,80,80,0.4); color: #ff8888; }
     /* Footer */
     footer {
       background: rgba(10,10,21,0.95);
@@ -244,17 +263,30 @@
     </div>
   </section>
 
-  <!-- Contact -->
-  <section id="contact">
+  <!-- Get In Touch -->
+  <section id="get-in-touch">
     <div class="container">
-      <div class="section-title">Contact Us</div>
+      <div class="section-title">Get In Touch</div>
+      <p style="text-align:center;color:#aaa;max-width:520px;margin:-30px auto 40px;line-height:1.7;">
+        Interested in PoseGuard for your fleet or project? Send us a message and our team will get back to you.
+      </p>
       <div class="row justify-content-center">
-        <div class="col-md-6">
-          <form class="contact-form">
-            <input type="text" placeholder="Your Name" />
-            <input type="email" placeholder="Your Email" />
-            <textarea rows="5" placeholder="Your Message"></textarea>
-            <button type="submit" class="contact-btn">Send Message</button>
+        <div class="col-md-7 col-lg-6">
+          {% if request.args.get('contact_sent') %}
+          <div class="form-alert success">Thank you! Your message has been received. We'll be in touch soon.</div>
+          {% elif request.args.get('contact_error') %}
+          <div class="form-alert error">Please fill in all fields before submitting.</div>
+          {% endif %}
+          <form class="touch-form" action="{{ url_for('get_in_touch') }}" method="POST">
+            <label for="touch-name">Name</label>
+            <input id="touch-name" type="text" name="name" placeholder="Your full name" required />
+            <label for="touch-email">Work Email</label>
+            <input id="touch-email" type="email" name="work_email" placeholder="you@company.com" required />
+            <label for="touch-company">Company / Project Name</label>
+            <input id="touch-company" type="text" name="company" placeholder="Your company or project" required />
+            <label for="touch-message">Message</label>
+            <textarea id="touch-message" name="message" rows="5" placeholder="Tell us about your use case or questions…" required></textarea>
+            <button type="submit" class="touch-btn">Send Message</button>
           </form>
         </div>
       </div>

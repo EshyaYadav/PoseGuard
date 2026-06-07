@@ -70,8 +70,8 @@
       <a href="{{ url_for('reports') }}">Reports</a>
       <a href="{{ url_for('admin_portal') }}" class="admin-link">Admin Portal</a>
     {% endif %}
-    <a href="{{ url_for('about') }}">About</a>
     <a href="{{ url_for('information') }}">Information</a>
+    <a href="{{ url_for('index') }}#get-in-touch">Get In Touch</a>
     {% if session.get('user') %}
       <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
     {% else %}

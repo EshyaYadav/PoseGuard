@@ -7,8 +7,8 @@
   <div class="lg:col-span-2">
     <div class="glass-card">
       <h3 style="font-family:'Orbitron',sans-serif;color:#00f3ff;font-size:1rem;text-transform:uppercase;margin-bottom:16px;">📷 Live Camera Feed</h3>
-      <img src="{{ url_for('video_feed') }}" class="w-full rounded-lg" style="border:1px solid rgba(0,243,255,0.3);border-radius:10px;" alt="Live Feed" />
-      <p style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:8px;text-align:center;">Real-time AI pose detection active</p>
+      <img id="live-feed" src="{{ url_for('video_feed') }}" class="w-full rounded-lg" style="border:1px solid rgba(0,243,255,0.3);border-radius:10px;" alt="Live Feed" />
+      <p id="feed-status" style="color:rgba(255,255,255,0.4);font-size:0.78rem;margin-top:8px;text-align:center;">Initializing AI model…</p>
     </div>
   </div>
   <!-- Status Panel -->
@@ -18,7 +18,7 @@
       <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;">
         <li style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,243,255,0.1);">
           <span style="color:#ccc;font-size:0.9rem;">Model Loaded</span>
-          <span style="color:#00ff88;font-size:1.1rem;">✅</span>
+          <span id="model-loaded-icon" style="font-size:1.1rem;">⏳</span>
         </li>
         <li style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(0,243,255,0.1);">
           <span style="color:#ccc;font-size:0.9rem;">Live Detection Active</span>
@@ -46,4 +46,34 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  const icon = document.getElementById('model-loaded-icon');
+  const feedStatus = document.getElementById('feed-status');
+
+  function poll() {
+    fetch('{{ url_for("model_status_api") }}')
+      .then(r => r.json())
+      .then(data => {
+        if (data.state === 'ready') {
+          if (icon) { icon.textContent = '✅'; icon.style.color = '#00ff88'; }
+          if (feedStatus) feedStatus.textContent = 'Real-time AI pose detection active';
+          return;
+        }
+        if (data.state === 'error') {
+          if (icon) { icon.textContent = '❌'; icon.style.color = '#ff5555'; }
+          if (feedStatus) feedStatus.textContent = data.error || data.message;
+          return;
+        }
+        if (feedStatus) feedStatus.textContent = data.message + ' (' + (data.progress || 0) + '%)';
+        setTimeout(poll, 600);
+      })
+      .catch(() => setTimeout(poll, 1000));
+  }
+  poll();
+})();
+</script>
 {% endblock %}
