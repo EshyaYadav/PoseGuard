@@ -1,7 +1,10 @@
 flask>=2.3,<3.0
 flask_sqlalchemy>=3.0
 bcrypt>=4.0
-tensorflow>=2.16.1
+flask
+flask-sqlalchemy
+bcrypt
+gunicorn
 opencv-python>=4.8
 numpy>=1.24,<2.0
 gunicorn>=21.0
